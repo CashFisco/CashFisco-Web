@@ -7,53 +7,58 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 const API_PREFIX = "/cashfisco-ws"
 
 // Função auxiliar para fazer requisições à API
+import { useRouter } from "next/navigation"
+
+// ...
+
 export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${API_PREFIX}${endpoint}`
+  const isFormData = options.body instanceof FormData
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
 
-  const defaultHeaders = {
-    "Content-Type": "application/json",
-    Accept: "application/json",
+  const headers = {
+    ...(isFormData ? { Accept: "application/json" } : {
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    }),
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   }
 
-  // Não definir Content-Type para requisições multipart/form-data
-  const headers = options.body instanceof FormData ? { Accept: "application/json" } : defaultHeaders
-
-  const config = {
+  const config: RequestInit = {
     ...options,
-    headers: {
-      ...headers,
-      ...options.headers,
-    },
+    headers,
   }
 
   try {
     const response = await fetch(url, config)
 
-    // Verifica se a resposta foi bem-sucedida
+    // Redireciona se for 401
+    if (response.status === 401) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token")
+        window.location.href = "/login"
+      }
+      throw new Error("Sessão expirada. Faça login novamente.")
+    }
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
       throw new Error(errorData.message || `Erro ${response.status}: ${response.statusText}`)
     }
 
-    // Para respostas vazias (204 No Content)
     if (response.status === 204) {
       return {} as T
     }
 
-    // Para respostas de download de arquivo
-    if (
-      response.headers
-        .get("Content-Type")
-        ?.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    ) {
+    const contentType = response.headers.get("Content-Type") || ""
+    if (contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
       const blob = await response.blob()
       return { blob } as unknown as T
     }
 
-    // Tenta fazer o parse do JSON
     const data = await response.json()
 
-    // Verifica se a resposta tem o formato { success, message, data }
     if (data && typeof data === "object" && "success" in data && "data" in data) {
       if (!data.success) {
         throw new Error(data.message || "Erro na requisição")
@@ -67,6 +72,68 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
     throw error
   }
 }
+
+
+// export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+//   const url = `${API_BASE_URL}${API_PREFIX}${endpoint}`
+
+//   const defaultHeaders = {
+//     "Content-Type": "application/json",
+//     Accept: "application/json",
+//   }
+
+//   // Não definir Content-Type para requisições multipart/form-data
+//   const headers = options.body instanceof FormData ? { Accept: "application/json" } : defaultHeaders
+
+//   const config = {
+//     ...options,
+//     headers: {
+//       ...headers,
+//       ...options.headers,
+//     },
+//   }
+
+//   try {
+//     const response = await fetch(url, config)
+
+//     // Verifica se a resposta foi bem-sucedida
+//     if (!response.ok) {
+//       const errorData = await response.json().catch(() => ({}))
+//       throw new Error(errorData.message || `Erro ${response.status}: ${response.statusText}`)
+//     }
+
+//     // Para respostas vazias (204 No Content)
+//     if (response.status === 204) {
+//       return {} as T
+//     }
+
+//     // Para respostas de download de arquivo
+//     if (
+//       response.headers
+//         .get("Content-Type")
+//         ?.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+//     ) {
+//       const blob = await response.blob()
+//       return { blob } as unknown as T
+//     }
+
+//     // Tenta fazer o parse do JSON
+//     const data = await response.json()
+
+//     // Verifica se a resposta tem o formato { success, message, data }
+//     if (data && typeof data === "object" && "success" in data && "data" in data) {
+//       if (!data.success) {
+//         throw new Error(data.message || "Erro na requisição")
+//       }
+//       return data.data as T
+//     }
+
+//     return data as T
+//   } catch (error) {
+//     console.error("Erro na requisição:", error)
+//     throw error
+//   }
+// }
 
 export interface ProdutoComSelecao {
   id?: string;
@@ -87,7 +154,7 @@ export interface ProdutoComSelecao {
 }
 
 
-export  interface  ProdutoNota {
+export interface ProdutoNota {
   id: number;
   chaveNota?: string; // se você tiver isso, ok
   descricao: string;
@@ -154,7 +221,7 @@ export interface ProdutoNota {
 }
 
 export interface RespostaSalvar {
-  
+
   chave: string
   cnpjEmitente: string
   nomeRazaoSocial: string
@@ -169,7 +236,7 @@ export interface NotaFiscal {
   chave: string;
   nomeRazaoSocial: string;
   cnpjEmitente: string;
-    dataEmissao: string;
+  dataEmissao: string;
   valorTotalProdutosMonofasicos: number;
   valorTotalPis: number;
   valorTotalCofins: number;
@@ -313,7 +380,7 @@ export const xmlService = {
     });
   },
 
- 
+
   // Agora recebe o payload completo que o back espera:
   // antes
   salvarProdutos: (payload: PayloadSalvar): Promise<RespostaSalvar> => {
@@ -428,10 +495,10 @@ export const produtosService = {
 
 export const relatoriosService = {
   // ... outros métodos existentes ...
-  
-  buscarAuditoriaPorChave: (chave: string) => 
+
+  buscarAuditoriaPorChave: (chave: string) =>
     fetchApi<RelatorioNotaFiscalDTO>(`/relatorio/${chave}`),
-  
+
   downloadAuditoriaExcel: async (chave: string) => {
     const url = `${API_BASE_URL}${API_PREFIX}/relatorio/${chave}/excel`;
     const response = await fetch(url, {
@@ -442,11 +509,11 @@ export const relatoriosService = {
       },
       credentials: 'include',
     });
-    
+
     if (!response.ok) {
       throw new Error(`Erro ${response.status}: ${response.statusText}`);
     }
-    
+
     const blob = await response.blob();
     const downloadUrl = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -458,6 +525,29 @@ export const relatoriosService = {
     window.URL.revokeObjectURL(downloadUrl);
   },
 };
+
+export interface LoginRequest {
+  email: string
+  senha: string
+}
+
+export interface LoginResponse {
+  token: string
+}
+
+export const authService = {
+  login: async (dados: LoginRequest): Promise<LoginResponse> => {
+    const response = await fetchApi<string>("/usuarios/login", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    });
+
+    return { token: response }; // resposta é uma string (token)
+  },
+};
+
+
+
 // export const relatoriosService = {
 //   gerarRelatorioProdutos: (filtros: any) =>
 //     fetchApi<Produto[]>("/relatorios/produtos", {
@@ -467,16 +557,16 @@ export const relatoriosService = {
 
 //   listarRelatoriosRestituicao: () => fetchApi<RelatorioRestituicao[]>("/relatorios/restituicoes"),
 
-  // gerarNovaRestituicao: (periodo: string) =>
-  //   fetchApi<RelatorioRestituicao>("/relatorios/restituicoes", {
-  //     method: "POST",
-  //     body: JSON.stringify({ periodo }),
-  //   }),
+// gerarNovaRestituicao: (periodo: string) =>
+//   fetchApi<RelatorioRestituicao>("/relatorios/restituicoes", {
+//     method: "POST",
+//     body: JSON.stringify({ periodo }),
+//   }),
 
-  // downloadRelatorio: (id: string, formato: string) => {
-  //   // Esta função retorna a URL para download
-  //   return `${API_BASE_URL}${API_PREFIX}/relatorios/${id}/download?formato=${formato}`
-  // },
+// downloadRelatorio: (id: string, formato: string) => {
+//   // Esta função retorna a URL para download
+//   return `${API_BASE_URL}${API_PREFIX}/relatorios/${id}/download?formato=${formato}`
+// },
 
 // Configurações
 // export const configuracoesService = {
