@@ -341,6 +341,8 @@ export interface Empresa {
   contatoTelefone?: string
 }
 
+
+
 export interface EmpresaResumo {
   id: number
   cnpj: string
@@ -348,8 +350,16 @@ export interface EmpresaResumo {
 }
 
 export interface EmpresaDetalhe extends Empresa {
-  criadoEm: string
-  notas: any[]
+  criadoEm: string;
+  notas: NotaResumo[];
+}
+
+export interface NotaResumo {
+  chave: string;
+  dataEmissao: string;
+  direitoRestituicao: boolean;
+  valorRestituicao: number;
+  produtos: Produto[];
 }
 
 // Serviços específicos para cada área da aplicação
@@ -434,12 +444,12 @@ export const xmlService = {
 export const empresasService = {
   // Listar todas as empresas (resumo)
   listarEmpresas: (): Promise<EmpresaResumo[]> => {
-    return fetchApi<EmpresaResumo[]>("/empresas")
+    return fetchApi<EmpresaResumo[]>("/empresas/listar")
   },
 
   // Cadastrar nova empresa
   cadastrarEmpresa: (empresa: Empresa): Promise<Empresa> => {
-    return fetchApi<Empresa>("/empresas", {
+    return fetchApi<Empresa>("/empresas/cadastrar", {
       method: "POST",
       body: JSON.stringify(empresa),
     })
@@ -447,24 +457,24 @@ export const empresasService = {
 
   // Buscar empresa por CNPJ (resumo)
   buscarEmpresa: (cnpj: string): Promise<EmpresaResumo> => {
-    return fetchApi<EmpresaResumo>(`/empresas/${cnpj}`)
+    return fetchApi<EmpresaResumo>(`/empresas/buscar/${cnpj}`)
   },
 
   // Buscar detalhes completos da empresa
   buscarDetalhesEmpresa: (cnpj: string): Promise<EmpresaDetalhe> => {
-    return fetchApi<EmpresaDetalhe>(`/empresas/${cnpj}/detalhe`)
+    return fetchApi<EmpresaDetalhe>(`/empresas/detalhe/${cnpj}`)
   },
 
   // Excluir empresa por CNPJ
   excluirEmpresa: (cnpj: string): Promise<void> => {
-    return fetchApi<void>(`/empresas/${cnpj}`, {
+    return fetchApi<void>(`/empresas/deletar/${cnpj}`, {
       method: "DELETE",
     })
   },
 
   // Atualizar empresa existente
   atualizarEmpresa: (cnpj: string, empresa: Empresa): Promise<Empresa> => {
-    return fetchApi<Empresa>(`/empresas/${cnpj}`, {
+    return fetchApi<Empresa>(`/empresas/atualizar/${cnpj}`, {
       method: "PUT",
       body: JSON.stringify(empresa),
     })
