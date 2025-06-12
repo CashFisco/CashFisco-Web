@@ -4,11 +4,11 @@ import { useState } from "react"
 import { Layout, Typography, theme } from "antd"
 import AppSidebar from "@/components/AppSidebar"
 import Dashboard from "@/components/Dashboard"
-import UploadXml from "@/components/UploadXml"
-import ProductsView from "@/components/ProdutosTabela"
-import Reports from "@/components/Relatorio"
-import Settings from "@/components/Settings"
-import Empresa from "@/components/Empresa"
+import UploadXml from "@/components/upload-xml/UploadXml"
+import ProductsView from "@/components/produtos/ProdutosTabela"
+import Reports from "@/components/relatorios/Relatorio"
+import Settings from "@/components/configuracoes/Settings"
+import Empresa from "@/components/empresa/page"
 
 const { Content } = Layout
 const { Title } = Typography

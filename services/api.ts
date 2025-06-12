@@ -362,6 +362,17 @@ export interface NotaResumo {
   produtos: Produto[];
 }
 
+export interface NotaFiscal {
+  chave: string;
+  cnpjEmitente: string;
+  nomeRazaoSocial: string;
+  dataEmissao: string; // ou Date, dependendo do parsing
+  direitoRestituicao: boolean;
+  valorRestituicao: number;
+}
+
+
+
 // Serviços específicos para cada área da aplicação
 
 // Dashboard
@@ -480,6 +491,16 @@ export const empresasService = {
     })
   }
 }
+
+
+// notas ficais por CNPJ
+
+export const notasService = {
+  listarPorEmpresaCnpj: (cnpj: string, chave?: string) => {
+    const query = chave ? `?chave=${encodeURIComponent(chave)}` : '';
+    return fetchApi<NotaFiscal[]>(`/notas/empresa/${cnpj}/notas${query}`);
+  },
+};
 
 
 
