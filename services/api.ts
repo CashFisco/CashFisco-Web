@@ -498,7 +498,7 @@ export const empresasService = {
 export const notasService = {
   listarPorEmpresaCnpj: (cnpj: string, chave?: string) => {
     const query = chave ? `?chave=${encodeURIComponent(chave)}` : '';
-    return fetchApi<NotaFiscal[]>(`/notas/empresa/${cnpj}/notas${query}`);
+    return fetchApi<NotaFiscal[]>(`/notas/empresa/${cnpj}/chave${query}`);
   },
 };
 
