@@ -9,6 +9,8 @@ import ProductsView from "@/components/produtos/ProdutosTabela"
 import Reports from "@/components/relatorios/Relatorio"
 import Settings from "@/components/configuracoes/Settings"
 import Empresa from "@/components/empresa/page"
+import CadastroUsuario from "@/components/usuarios/PaginaAdmin"
+import PaginaAdmin from "@/components/usuarios/PaginaAdmin"
 
 const { Content } = Layout
 const { Title } = Typography
@@ -32,6 +34,8 @@ export default function Home() {
         return <Empresa />
       case "reports":
         return <Reports />
+         case "PaginaAdmin":
+        return <PaginaAdmin />
       case "settings":
         return <Settings />
       default:

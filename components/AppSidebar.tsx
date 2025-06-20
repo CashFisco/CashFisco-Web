@@ -150,6 +150,12 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ currentPage, setCurrentPage, da
       icon: <BarChartOutlined />,
       label: "Relatórios",
     },
+
+       {
+      key: "PaginaAdmin",
+      icon: <BarChartOutlined />,
+      label: "Administração",
+    }, 
     {
       key: "settings",
       icon: <SettingOutlined />,

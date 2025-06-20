@@ -1,7 +1,7 @@
-// "use client"
 
 // import type React from "react"
 // import { useState, useEffect } from "react"
+// import { useRouter } from "next/navigation"
 // import {
 //   Typography,
 //   Table,
@@ -18,32 +18,49 @@
 //   Row,
 //   Col,
 //   Divider,
+//   Tooltip,
+//   Badge,
 // } from "antd"
 // import {
 //   SearchOutlined,
 //   PlusOutlined,
 //   DeleteOutlined,
-//   EditOutlined,
 //   BuildOutlined,
 //   PhoneOutlined,
 //   MailOutlined,
 //   EnvironmentOutlined,
 //   CalendarOutlined,
 //   FileTextOutlined,
+//   CloudUploadOutlined,
+//   EyeOutlined,
+//   AuditOutlined,
 // } from "@ant-design/icons"
 // import type { ColumnsType } from "antd/es/table"
-// import { type Empresa, type EmpresaDetalhe, empresasService } from "@/services/api"
+// import {
+//   type Empresa,
+//   type EmpresaDetalhe,
+//   empresasService,
+//   notasService,
+//   type NotaFiscalAuditada,
+// } from "@/services/api"
 
 // const { Title, Text } = Typography
 
 // const EmpresasView: React.FC = () => {
+//   const router = useRouter()
 //   const [loading, setLoading] = useState<boolean>(true)
+//   const [loadingNotas, setLoadingNotas] = useState<boolean>(false)
 //   const [empresas, setEmpresas] = useState<Empresa[]>([])
 //   const [empresaSelecionada, setEmpresaSelecionada] = useState<EmpresaDetalhe | null>(null)
+//   const [notasAuditadas, setNotasAuditadas] = useState<NotaFiscalAuditada[]>([])
 //   const [modalVisible, setModalVisible] = useState<boolean>(false)
 //   const [modalDetalheVisible, setModalDetalheVisible] = useState<boolean>(false)
+//   const [modalNotasVisible, setModalNotasVisible] = useState<boolean>(false)
 //   const [searchText, setSearchText] = useState<string>("")
 //   const [form] = Form.useForm()
+//   const [relatorioSelecionado, setRelatorioSelecionado] = useState<any>(null)
+//   const [modalRelatorioVisible, setModalRelatorioVisible] = useState<boolean>(false)
+
 
 //   useEffect(() => {
 //     carregarEmpresas()
@@ -76,6 +93,20 @@
 //     }
 //   }
 
+//   const carregarNotasAuditadas = async (cnpj: string, nomeEmpresa: string) => {
+//     try {
+//       setLoadingNotas(true)
+//       const data = await notasService.listarPorEmpresaCnpj(cnpj)
+//       setNotasAuditadas(data)
+//       setModalNotasVisible(true)
+//     } catch (error) {
+//       console.error("Erro ao carregar notas auditadas:", error)
+//       message.error("Erro ao carregar notas auditadas")
+//     } finally {
+//       setLoadingNotas(false)
+//     }
+//   }
+
 //   const handleSubmit = async (values: Empresa) => {
 //     try {
 //       setLoading(true)
@@ -83,6 +114,13 @@
 //       message.success("Empresa cadastrada com sucesso!")
 //       form.resetFields()
 //       setModalVisible(false)
+
+//       // Após cadastrar, carrega os detalhes da empresa recém-cadastrada
+//       const empresaCadastrada = await empresasService.buscarDetalhesEmpresa(values.cnpj)
+//       setEmpresaSelecionada(empresaCadastrada)
+//       setModalDetalheVisible(true)
+
+//       // Recarrega a lista de empresas
 //       carregarEmpresas()
 //     } catch (error) {
 //       console.error("Erro ao cadastrar empresa:", error)
@@ -113,6 +151,47 @@
 //         }
 //       },
 //     })
+//   }
+
+//   // Função para navegar para a página de upload de XML com o CNPJ pré-selecionado
+//   const handleUploadXml = (cnpj: string) => {
+//     router.push(`/upload-xml?cnpj=${cnpj}`)
+//   }
+
+//   const visualizarRelatorio = async (cnpj: string, chave: string) => {
+//     try {
+//       setLoading(true)
+
+//       // Busca o relatório na API
+//       const relatorio = await notasService.buscarRelatorioDetalhado(cnpj, chave)
+
+//       // Salva o retorno no state
+//       setRelatorioSelecionado(relatorio)
+//       setModalRelatorioVisible(true)
+
+//     } catch (error) {
+//       console.error("Erro ao buscar o relatório detalhado:", error)
+//       message.error("Erro ao carregar relatório")
+//     } finally {
+//       setLoading(false)
+//     }
+//   }
+
+
+
+//   // Função para baixar relatório em Excel
+//   const handleBaixarRelatorio = async (chave: string) => {
+//     try {
+//       setLoadingNotas(true)
+//       // Aqui você implementaria a chamada para baixar o Excel
+//       // await relatoriosService.downloadExcel(chave)
+//       message.success("Relatório baixado com sucesso!")
+//     } catch (error) {
+//       console.error("Erro ao baixar relatório:", error)
+//       message.error("Erro ao baixar relatório")
+//     } finally {
+//       setLoadingNotas(false)
+//     }
 //   }
 
 //   const filteredEmpresas = empresas.filter(
@@ -158,19 +237,51 @@
 //       key: "acoes",
 //       render: (_, record) => (
 //         <Space>
-//           <Button
-//             type="primary"
-//             size="small"
-//             icon={<EditOutlined />}
-//             onClick={() => carregarDetalhesEmpresa(record.cnpj)}
-//             style={{
-//               background: "linear-gradient(45deg, #1890ff, #40a9ff)",
-//               border: "none",
-//               borderRadius: "6px",
-//             }}
-//           >
-//             Detalhes
-//           </Button>
+//           <Tooltip title="Ver detalhes da empresa">
+//             <Button
+//               type="primary"
+//               size="small"
+//               icon={<EyeOutlined />}
+//               onClick={() => carregarDetalhesEmpresa(record.cnpj)}
+//               style={{
+//                 background: "linear-gradient(45deg, #1890ff, #40a9ff)",
+//                 border: "none",
+//                 borderRadius: "6px",
+//               }}
+//             >
+//               Detalhes
+//             </Button>
+//           </Tooltip>
+//           <Tooltip title="Fazer upload de XML">
+//             <Button
+//               type="primary"
+//               size="small"
+//               icon={<CloudUploadOutlined />}
+//               onClick={() => handleUploadXml(record.cnpj)}
+//               style={{
+//                 background: "linear-gradient(45deg, #fa8c16, #ffa940)",
+//                 border: "none",
+//                 borderRadius: "6px",
+//               }}
+//             >
+//               Upload XML
+//             </Button>
+//           </Tooltip>
+//           <Tooltip title="Ver notas auditadas">
+//             <Button
+//               type="primary"
+//               size="small"
+//               icon={<AuditOutlined />}
+//               onClick={() => carregarNotasAuditadas(record.cnpj, record.nomeRazaoSocial)}
+//               style={{
+//                 background: "linear-gradient(45deg, #52c41a, #73d13d)",
+//                 border: "none",
+//                 borderRadius: "6px",
+//               }}
+//             >
+//               Notas
+//             </Button>
+//           </Tooltip>
 //           <Button
 //             danger
 //             size="small"
@@ -181,6 +292,144 @@
 //               borderRadius: "6px",
 //             }}
 //           />
+//         </Space>
+//       ),
+//     },
+//   ]
+
+//   const notasColumns: ColumnsType<NotaFiscalAuditada> = [
+//     {
+//       title: "Chave da Nota",
+//       dataIndex: "chave",
+//       key: "chave",
+//       render: (text) => (
+//         <Tag
+//           style={{
+//             background: "linear-gradient(45deg, #1890ff, #40a9ff)",
+//             border: "none",
+//             color: "white",
+//             fontWeight: "500",
+//             padding: "4px 8px",
+//             borderRadius: "6px",
+//             fontFamily: "monospace",
+//             maxWidth: "200px",
+//           }}
+//         >
+//           <Text ellipsis style={{ color: "white", maxWidth: 180 }}>
+//             {text}
+//           </Text>
+//         </Tag>
+//       ),
+//     },
+//     {
+//       title: "Data Emissão",
+//       dataIndex: "dataEmissao",
+//       key: "dataEmissao",
+//       render: (text) => (
+//         <div style={{ display: "flex", alignItems: "center" }}>
+//           <CalendarOutlined style={{ color: "#52c41a", marginRight: "6px" }} />
+//           <Text>{text ? new Date(text).toLocaleDateString("pt-BR") : "-"}</Text>
+//         </div>
+//       ),
+//       sorter: (a, b) => new Date(a.dataEmissao).getTime() - new Date(b.dataEmissao).getTime(),
+//     },
+//     {
+//       title: "Valor Restituição",
+//       dataIndex: "valorRestituicao",
+//       key: "valorRestituicao",
+//       render: (value, record) => (
+//         <Tag
+//           style={{
+//             background: record.direitoRestituicao ? "rgba(82, 196, 26, 0.1)" : "rgba(255, 77, 79, 0.1)",
+//             color: record.direitoRestituicao ? "#52c41a" : "#ff4d4f",
+//             border: record.direitoRestituicao ? "1px solid rgba(82, 196, 26, 0.3)" : "1px solid rgba(255, 77, 79, 0.3)",
+//             fontWeight: "600",
+//             borderRadius: "6px",
+//           }}
+//         >
+//           R$ {value.toFixed(2)}
+//         </Tag>
+//       ),
+//       sorter: (a, b) => a.valorRestituicao - b.valorRestituicao,
+//     },
+//     {
+//       title: "Direito Restituição",
+//       dataIndex: "direitoRestituicao",
+//       key: "direitoRestituicao",
+//       render: (value) => (
+//         <Tag
+//           color={value ? "success" : "error"}
+//           style={{
+//             borderRadius: "6px",
+//             fontWeight: "600",
+//           }}
+//         >
+//           {value ? "SIM" : "NÃO"}
+//         </Tag>
+//       ),
+//       filters: [
+//         { text: "Sim", value: true },
+//         { text: "Não", value: false },
+//       ],
+//       onFilter: (value, record) => record.direitoRestituicao === value,
+//     },
+//     {
+//       title: "Produtos Auditados",
+//       dataIndex: "produtosAuditados",
+//       key: "produtosAuditados",
+//       render: (produtos: NotaFiscalAuditada["produtosAuditados"]) => (
+//         <Badge
+//           count={produtos.length}
+//           style={{
+//             backgroundColor: "#1890ff",
+//           }}
+//         >
+//           <Tag
+//             style={{
+//               background: "rgba(24, 144, 255, 0.1)",
+//               color: "#1890ff",
+//               border: "1px solid rgba(24, 144, 255, 0.3)",
+//               fontWeight: "600",
+//               borderRadius: "6px",
+//             }}
+//           >
+//             {produtos.length} produtos
+//           </Tag>
+//         </Badge>
+//       ),
+//     },
+//     {
+//       title: "Ações",
+//       key: "acoes",
+//       render: (_, record) => (
+//         <Space>
+//           <Tooltip title="Visualizar relatório 2">
+//             <Button
+//               type="primary"
+//               size="small"
+//               icon={<EyeOutlined />}
+//               onClick={() => visualizarRelatorio(record.cnpjEmitente, record.chave)}
+
+//               style={{
+//                 background: "linear-gradient(45deg, #1890ff, #40a9ff)",
+//                 border: "none",
+//                 borderRadius: "6px",
+//               }}
+//             />
+//           </Tooltip>
+//           <Tooltip title="Baixar relatório Excel">
+//             <Button
+//               type="primary"
+//               size="small"
+//               icon={<FileTextOutlined />}
+//               onClick={() => handleBaixarRelatorio(record.chave)}
+//               style={{
+//                 background: "linear-gradient(45deg, #52c41a, #73d13d)",
+//                 border: "none",
+//                 borderRadius: "6px",
+//               }}
+//             />
+//           </Tooltip>
 //         </Space>
 //       ),
 //     },
@@ -461,7 +710,41 @@
 //         }
 //         open={modalDetalheVisible}
 //         onCancel={() => setModalDetalheVisible(false)}
-//         footer={null}
+//         footer={
+//           empresaSelecionada && (
+//             <div style={{ display: "flex", justifyContent: "space-between" }}>
+//               <Button
+//                 type="primary"
+//                 icon={<CloudUploadOutlined />}
+//                 onClick={() => handleUploadXml(empresaSelecionada.cnpj)}
+//                 style={{
+//                   background: "linear-gradient(45deg, #fa8c16, #ffa940)",
+//                   border: "none",
+//                   borderRadius: "8px",
+//                   fontWeight: "600",
+//                 }}
+//               >
+//                 Fazer Upload de XML
+//               </Button>
+//               <Space>
+//                 <Button onClick={() => setModalDetalheVisible(false)}>Fechar</Button>
+//                 <Button
+//                   type="primary"
+//                   icon={<AuditOutlined />}
+//                   onClick={() => carregarNotasAuditadas(empresaSelecionada.cnpj, empresaSelecionada.nomeRazaoSocial)}
+//                   style={{
+//                     background: "linear-gradient(45deg, #52c41a, #73d13d)",
+//                     border: "none",
+//                     borderRadius: "8px",
+//                     fontWeight: "600",
+//                   }}
+//                 >
+//                   Ver Notas Auditadas
+//                 </Button>
+//               </Space>
+//             </div>
+//           )
+//         }
 //         width={800}
 //         style={{ borderRadius: "12px" }}
 //       >
@@ -582,15 +865,197 @@
 //           </>
 //         )}
 //       </Modal>
+
+//       {/* Modal de Notas Auditadas */}
+//       <Modal
+//         title={
+//           <div style={{ display: "flex", alignItems: "center" }}>
+//             <div
+//               style={{
+//                 width: "32px",
+//                 height: "32px",
+//                 borderRadius: "50%",
+//                 background: "linear-gradient(45deg, #52c41a, #73d13d)",
+//                 display: "flex",
+//                 alignItems: "center",
+//                 justifyContent: "center",
+//                 marginRight: "12px",
+//               }}
+//             >
+//               <AuditOutlined style={{ color: "white", fontSize: "16px" }} />
+//             </div>
+//             <span style={{ fontSize: "18px", fontWeight: "600" }}>
+//               Notas Fiscais Auditadas ({notasAuditadas.length})
+//             </span>
+//           </div>
+//         }
+//         open={modalNotasVisible}
+//         onCancel={() => setModalNotasVisible(false)}
+//         footer={
+//           <div style={{ display: "flex", justifyContent: "space-between" }}>
+//             <Button onClick={() => setModalNotasVisible(false)}>Fechar</Button>
+//             <Button
+//               type="primary"
+//               onClick={() => message.info("Funcionalidade de exportação em desenvolvimento")}
+//               style={{
+//                 background: "linear-gradient(45deg, #1890ff, #40a9ff)",
+//                 border: "none",
+//                 borderRadius: "8px",
+//                 fontWeight: "600",
+//               }}
+//             >
+//               Exportar Todas
+//             </Button>
+//           </div>
+//         }
+//         width={1200}
+//         style={{ borderRadius: "12px" }}
+//       >
+//         <Divider style={{ margin: "16px 0 24px 0" }} />
+
+//         <Spin spinning={loadingNotas}>
+//           <Table
+//             dataSource={notasAuditadas}
+//             columns={notasColumns}
+//             rowKey="chave"
+//             pagination={{
+//               pageSize: 10,
+//               showSizeChanger: true,
+//               pageSizeOptions: ["10", "20", "50"],
+//               showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} notas`,
+//             }}
+//             style={{
+//               ".ant-table-thead > tr > th": {
+//                 background: "linear-gradient(90deg, rgba(24, 144, 255, 0.05), rgba(250, 140, 22, 0.05))",
+//                 fontWeight: "600",
+//               },
+//             }}
+//             expandable={{
+//               expandedRowRender: (record) => (
+//                 <div style={{ margin: 0 }}>
+//                   <Title level={5} style={{ marginBottom: "16px" }}>
+//                     Produtos Auditados:
+//                   </Title>
+//                   <Row gutter={[16, 16]}>
+//                     {record.produtosAuditados.map((produto) => (
+//                       <Col xs={24} sm={12} md={8} key={produto.id}>
+//                         <Card
+//                           size="small"
+//                           style={{
+//                             borderRadius: "8px",
+//                             border: "1px solid #e8f4fd",
+//                             background: "rgba(24, 144, 255, 0.05)",
+//                           }}
+//                         >
+//                           <Text strong style={{ fontSize: "12px", color: "#1890ff" }}>
+//                             ID: {produto.id}
+//                           </Text>
+//                           <br />
+//                           <Text style={{ fontSize: "13px" }}>{produto.descricaoProduto}</Text>
+//                         </Card>
+//                       </Col>
+//                     ))}
+//                   </Row>
+//                 </div>
+//               ),
+//               rowExpandable: (record) => record.produtosAuditados.length > 0,
+//             }}
+//           />
+//         </Spin>
+//       </Modal>
+//       <Modal
+//         title={
+//           <div style={{ display: "flex", alignItems: "center" }}>
+//             <div
+//               style={{
+//                 width: "32px",
+//                 height: "32px",
+//                 borderRadius: "50%",
+//                 background: "linear-gradient(45deg, #1890ff, #40a9ff)",
+//                 display: "flex",
+//                 alignItems: "center",
+//                 justifyContent: "center",
+//                 marginRight: "12px",
+//               }}
+//             >
+//               <FileTextOutlined style={{ color: "white", fontSize: "16px" }} />
+//             </div>
+//             <span style={{ fontSize: "18px", fontWeight: "600" }}>Relatório Detalhado da Nota</span>
+//           </div>
+//         }
+//         open={modalRelatorioVisible}
+//         onCancel={() => setModalRelatorioVisible(false)}
+//         footer={<Button onClick={() => setModalRelatorioVisible(false)}>Fechar</Button>}
+//         width={800}
+//         style={{ borderRadius: "12px" }}
+//       >
+//         {relatorioSelecionado ? (
+//           <Descriptions
+//             bordered
+//             column={1}
+//             labelStyle={{
+//               fontWeight: "600",
+//               background: "linear-gradient(90deg, rgba(24, 144, 255, 0.05), rgba(250, 140, 22, 0.05))",
+//               width: "250px",
+//             }}
+//             contentStyle={{ background: "#fafafa" }}
+//           >
+//             <Descriptions.Item label="Chave da Nota">
+//               <Tag
+//                 color="blue"
+//                 style={{
+//                   background: "linear-gradient(45deg, #1890ff, #40a9ff)",
+//                   border: "none",
+//                   color: "white",
+//                   fontWeight: "500",
+//                   padding: "4px 12px",
+//                   borderRadius: "6px",
+//                 }}
+//               >
+//                 {relatorioSelecionado.chave}
+//               </Tag>
+//             </Descriptions.Item>
+
+//             <Descriptions.Item label="Valor Produtos Monofásicos">
+//               <Text strong>R$ {relatorioSelecionado.valorTotalProdutosMonofasicos.toFixed(2)}</Text>
+//             </Descriptions.Item>
+
+//             <Descriptions.Item label="Valor Total PIS">
+//               <Text strong>R$ {relatorioSelecionado.valorTotalPis.toFixed(2)}</Text>
+//             </Descriptions.Item>
+
+//             <Descriptions.Item label="Valor Total COFINS">
+//               <Text strong>R$ {relatorioSelecionado.valorTotalCofins.toFixed(2)}</Text>
+//             </Descriptions.Item>
+
+//             <Descriptions.Item label="Valor Restituição">
+//               <Text strong style={{ color: relatorioSelecionado.direitoRestituicao ? "#52c41a" : "#ff4d4f" }}>
+//                 R$ {relatorioSelecionado.valorRestituicao.toFixed(2)}
+//               </Text>
+//             </Descriptions.Item>
+
+//             <Descriptions.Item label="Direito à Restituição">
+//               <Tag color={relatorioSelecionado.direitoRestituicao ? "success" : "error"}>
+//                 {relatorioSelecionado.direitoRestituicao ? "SIM" : "NÃO"}
+//               </Tag>
+//             </Descriptions.Item>
+//           </Descriptions>
+//         ) : (
+//           <Spin spinning={true} />
+//         )}
+//       </Modal>
+
+
 //     </div>
 //   )
 // }
 
 // export default EmpresasView
+// function listarPorEmpresaCnpj(chave: any): void {
+//   throw new Error("Function not implemented.")
+// }
 
 
-
-"use client"
 
 import type React from "react"
 import { useState, useEffect } from "react"
@@ -651,6 +1116,9 @@ const EmpresasView: React.FC = () => {
   const [modalNotasVisible, setModalNotasVisible] = useState<boolean>(false)
   const [searchText, setSearchText] = useState<string>("")
   const [form] = Form.useForm()
+  const [relatorioSelecionado, setRelatorioSelecionado] = useState<any>(null)
+  const [modalRelatorioVisible, setModalRelatorioVisible] = useState<boolean>(false)
+
 
   useEffect(() => {
     carregarEmpresas()
@@ -705,12 +1173,10 @@ const EmpresasView: React.FC = () => {
       form.resetFields()
       setModalVisible(false)
 
-      // Após cadastrar, carrega os detalhes da empresa recém-cadastrada
       const empresaCadastrada = await empresasService.buscarDetalhesEmpresa(values.cnpj)
       setEmpresaSelecionada(empresaCadastrada)
       setModalDetalheVisible(true)
 
-      // Recarrega a lista de empresas
       carregarEmpresas()
     } catch (error) {
       console.error("Erro ao cadastrar empresa:", error)
@@ -743,21 +1209,30 @@ const EmpresasView: React.FC = () => {
     })
   }
 
-  // Função para navegar para a página de upload de XML com o CNPJ pré-selecionado
   const handleUploadXml = (cnpj: string) => {
     router.push(`/upload-xml?cnpj=${cnpj}`)
   }
 
-  // Função para visualizar relatório de uma nota específica
-  const handleVisualizarRelatorio = (chave: string) => {
-    router.push(`/relatorios/${chave}`)
+  const visualizarRelatorio = async (cnpj: string, chave: string) => {
+    // Reseta o estado anterior para garantir que o spinner apareça
+    setRelatorioSelecionado(null)
+    setModalRelatorioVisible(true)
+    setLoading(true) // Usar um loading específico para o modal de relatório é uma boa prática
+    try {
+      const relatorio = await notasService.buscarRelatorioDetalhado(cnpj, chave)
+      setRelatorioSelecionado(relatorio)
+    } catch (error) {
+      console.error("Erro ao buscar o relatório detalhado:", error)
+      message.error("Erro ao carregar relatório")
+      setModalRelatorioVisible(false) // Fecha o modal em caso de erro
+    } finally {
+      setLoading(false)
+    }
   }
 
-  // Função para baixar relatório em Excel
   const handleBaixarRelatorio = async (chave: string) => {
     try {
       setLoadingNotas(true)
-      // Aqui você implementaria a chamada para baixar o Excel
       // await relatoriosService.downloadExcel(chave)
       message.success("Relatório baixado com sucesso!")
     } catch (error) {
@@ -785,7 +1260,7 @@ const EmpresasView: React.FC = () => {
             background: "linear-gradient(45deg, #1890ff, #40a9ff)",
             border: "none",
             color: "white",
-            fontWeight: "500",
+            fontWeight: 500,
             padding: "4px 12px",
             borderRadius: "6px",
           }}
@@ -882,7 +1357,7 @@ const EmpresasView: React.FC = () => {
             background: "linear-gradient(45deg, #1890ff, #40a9ff)",
             border: "none",
             color: "white",
-            fontWeight: "500",
+            fontWeight: 500,
             padding: "4px 8px",
             borderRadius: "6px",
             fontFamily: "monospace",
@@ -917,7 +1392,7 @@ const EmpresasView: React.FC = () => {
             background: record.direitoRestituicao ? "rgba(82, 196, 26, 0.1)" : "rgba(255, 77, 79, 0.1)",
             color: record.direitoRestituicao ? "#52c41a" : "#ff4d4f",
             border: record.direitoRestituicao ? "1px solid rgba(82, 196, 26, 0.3)" : "1px solid rgba(255, 77, 79, 0.3)",
-            fontWeight: "600",
+            fontWeight: 600,
             borderRadius: "6px",
           }}
         >
@@ -935,7 +1410,7 @@ const EmpresasView: React.FC = () => {
           color={value ? "success" : "error"}
           style={{
             borderRadius: "6px",
-            fontWeight: "600",
+            fontWeight: 600,
           }}
         >
           {value ? "SIM" : "NÃO"}
@@ -963,7 +1438,7 @@ const EmpresasView: React.FC = () => {
               background: "rgba(24, 144, 255, 0.1)",
               color: "#1890ff",
               border: "1px solid rgba(24, 144, 255, 0.3)",
-              fontWeight: "600",
+              fontWeight: 600,
               borderRadius: "6px",
             }}
           >
@@ -977,12 +1452,12 @@ const EmpresasView: React.FC = () => {
       key: "acoes",
       render: (_, record) => (
         <Space>
-          <Tooltip title="Visualizar relatório">
+          <Tooltip title="Visualizar relatório 2">
             <Button
               type="primary"
               size="small"
               icon={<EyeOutlined />}
-              onClick={() => handleVisualizarRelatorio(record.chave)}
+              onClick={() => visualizarRelatorio(record.cnpjEmitente, record.chave)}
               style={{
                 background: "linear-gradient(45deg, #1890ff, #40a9ff)",
                 border: "none",
@@ -1080,7 +1555,7 @@ const EmpresasView: React.FC = () => {
                 background: "linear-gradient(45deg, #fa8c16, #ffa940)",
                 border: "none",
                 borderRadius: "8px",
-                fontWeight: "600",
+                fontWeight: 600,
                 height: "40px",
                 boxShadow: "0 4px 12px rgba(250, 140, 22, 0.3)",
               }}
@@ -1110,12 +1585,6 @@ const EmpresasView: React.FC = () => {
               pageSizeOptions: ["10", "20", "50"],
               showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} empresas`,
             }}
-            style={{
-              ".ant-table-thead > tr > th": {
-                background: "linear-gradient(90deg, rgba(24, 144, 255, 0.05), rgba(250, 140, 22, 0.05))",
-                fontWeight: "600",
-              },
-            }}
           />
         </Spin>
       </Card>
@@ -1138,7 +1607,7 @@ const EmpresasView: React.FC = () => {
             >
               <PlusOutlined style={{ color: "white", fontSize: "16px" }} />
             </div>
-            <span style={{ fontSize: "18px", fontWeight: "600" }}>Cadastrar Nova Empresa</span>
+            <span style={{ fontSize: "18px", fontWeight: 600 }}>Cadastrar Nova Empresa</span>
           </div>
         }
         open={modalVisible}
@@ -1158,7 +1627,7 @@ const EmpresasView: React.FC = () => {
             <Col span={24}>
               <Form.Item
                 name="cnpj"
-                label={<span style={{ fontWeight: "500" }}>CNPJ</span>}
+                label={<span style={{ fontWeight: 500 }}>CNPJ</span>}
                 rules={[
                   { required: true, message: "Por favor, informe o CNPJ" },
                   {
@@ -1178,7 +1647,7 @@ const EmpresasView: React.FC = () => {
 
           <Form.Item
             name="nomeRazaoSocial"
-            label={<span style={{ fontWeight: "500" }}>Razão Social</span>}
+            label={<span style={{ fontWeight: 500 }}>Razão Social</span>}
             rules={[
               { required: true, message: "Por favor, informe a Razão Social" },
               {
@@ -1192,7 +1661,7 @@ const EmpresasView: React.FC = () => {
 
           <Form.Item
             name="endereco"
-            label={<span style={{ fontWeight: "500" }}>Endereço</span>}
+            label={<span style={{ fontWeight: 500 }}>Endereço</span>}
             rules={[
               {
                 min: 10,
@@ -1207,7 +1676,7 @@ const EmpresasView: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="contatoEmail"
-                label={<span style={{ fontWeight: "500" }}>E-mail de Contato</span>}
+                label={<span style={{ fontWeight: 500 }}>E-mail de Contato</span>}
                 rules={[{ type: "email", message: "Por favor, informe um e-mail válido" }]}
               >
                 <Input placeholder="Digite o e-mail de contato" style={{ borderRadius: "8px", height: "40px" }} />
@@ -1216,10 +1685,10 @@ const EmpresasView: React.FC = () => {
             <Col span={12}>
               <Form.Item
                 name="contatoTelefone"
-                label={<span style={{ fontWeight: "500" }}>Telefone de Contato</span>}
+                label={<span style={{ fontWeight: 500 }}>Telefone de Contato</span>}
                 rules={[
                   {
-                    pattern: /^$$\d{2}$$ \d{4,5}-\d{4}$/,
+                    pattern: /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/,
                     message: "Formato: (XX) XXXX-XXXX ou (XX) XXXXX-XXXX",
                   },
                 ]}
@@ -1250,7 +1719,7 @@ const EmpresasView: React.FC = () => {
                   background: "linear-gradient(45deg, #1890ff, #40a9ff)",
                   border: "none",
                   borderRadius: "8px",
-                  fontWeight: "600",
+                  fontWeight: 600,
                 }}
               >
                 Cadastrar Empresa
@@ -1278,7 +1747,7 @@ const EmpresasView: React.FC = () => {
             >
               <BuildOutlined style={{ color: "white", fontSize: "16px" }} />
             </div>
-            <span style={{ fontSize: "18px", fontWeight: "600" }}>Detalhes da Empresa</span>
+            <span style={{ fontSize: "18px", fontWeight: 600 }}>Detalhes da Empresa</span>
           </div>
         }
         open={modalDetalheVisible}
@@ -1294,7 +1763,7 @@ const EmpresasView: React.FC = () => {
                   background: "linear-gradient(45deg, #fa8c16, #ffa940)",
                   border: "none",
                   borderRadius: "8px",
-                  fontWeight: "600",
+                  fontWeight: 600,
                 }}
               >
                 Fazer Upload de XML
@@ -1309,7 +1778,7 @@ const EmpresasView: React.FC = () => {
                     background: "linear-gradient(45deg, #52c41a, #73d13d)",
                     border: "none",
                     borderRadius: "8px",
-                    fontWeight: "600",
+                    fontWeight: 600,
                   }}
                 >
                   Ver Notas Auditadas
@@ -1321,122 +1790,129 @@ const EmpresasView: React.FC = () => {
         width={800}
         style={{ borderRadius: "12px" }}
       >
-        {empresaSelecionada && (
-          <>
-            <Divider style={{ margin: "16px 0 24px 0" }} />
-            <Descriptions
-              bordered
-              column={1}
-              labelStyle={{
-                fontWeight: "600",
-                background: "linear-gradient(90deg, rgba(24, 144, 255, 0.05), rgba(250, 140, 22, 0.05))",
-                width: "200px",
-              }}
-              contentStyle={{ background: "#fafafa" }}
-            >
-              <Descriptions.Item
-                label={
-                  <span>
-                    <BuildOutlined style={{ color: "#1890ff", marginRight: "8px" }} />
-                    CNPJ
-                  </span>
-                }
+        <Spin spinning={loading}>
+          {empresaSelecionada && (
+            <>
+              <Divider style={{ margin: "16px 0 24px 0" }} />
+              {/* CORREÇÃO: `labelStyle` e `contentStyle` foram substituídas pela prop `styles` */}
+              <Descriptions
+                bordered
+                column={1}
+                styles={{
+                  label: {
+                    fontWeight: 600,
+                    background: "linear-gradient(90deg, rgba(24, 144, 255, 0.05), rgba(250, 140, 22, 0.05))",
+                    width: "200px",
+                  },
+                  content: {
+                    background: "#fafafa",
+                  },
+                }}
               >
-                <Tag
-                  color="blue"
-                  style={{
-                    background: "linear-gradient(45deg, #1890ff, #40a9ff)",
-                    border: "none",
-                    color: "white",
-                    fontWeight: "500",
-                    padding: "4px 12px",
-                    borderRadius: "6px",
-                  }}
+                <Descriptions.Item
+                  label={
+                    <span>
+                      <BuildOutlined style={{ color: "#1890ff", marginRight: "8px" }} />
+                      CNPJ
+                    </span>
+                  }
                 >
-                  {empresaSelecionada.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")}
-                </Tag>
-              </Descriptions.Item>
+                  <Tag
+                    color="blue"
+                    style={{
+                      background: "linear-gradient(45deg, #1890ff, #40a9ff)",
+                      border: "none",
+                      color: "white",
+                      fontWeight: 500,
+                      padding: "4px 12px",
+                      borderRadius: "6px",
+                    }}
+                  >
+                    {empresaSelecionada.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")}
+                  </Tag>
+                </Descriptions.Item>
 
-              <Descriptions.Item
-                label={
-                  <span>
-                    <BuildOutlined style={{ color: "#fa8c16", marginRight: "8px" }} />
-                    Razão Social
-                  </span>
-                }
-              >
-                <Text strong>{empresaSelecionada.nomeRazaoSocial}</Text>
-              </Descriptions.Item>
-
-              <Descriptions.Item
-                label={
-                  <span>
-                    <EnvironmentOutlined style={{ color: "#52c41a", marginRight: "8px" }} />
-                    Endereço
-                  </span>
-                }
-              >
-                {empresaSelecionada.endereco || "-"}
-              </Descriptions.Item>
-
-              <Descriptions.Item
-                label={
-                  <span>
-                    <MailOutlined style={{ color: "#1890ff", marginRight: "8px" }} />
-                    E-mail de Contato
-                  </span>
-                }
-              >
-                {empresaSelecionada.contatoEmail || "-"}
-              </Descriptions.Item>
-
-              <Descriptions.Item
-                label={
-                  <span>
-                    <PhoneOutlined style={{ color: "#fa8c16", marginRight: "8px" }} />
-                    Telefone de Contato
-                  </span>
-                }
-              >
-                {empresaSelecionada.contatoTelefone || "-"}
-              </Descriptions.Item>
-
-              <Descriptions.Item
-                label={
-                  <span>
-                    <CalendarOutlined style={{ color: "#722ed1", marginRight: "8px" }} />
-                    Cadastrado em
-                  </span>
-                }
-              >
-                {empresaSelecionada.criadoEm ? new Date(empresaSelecionada.criadoEm).toLocaleString("pt-BR") : "-"}
-              </Descriptions.Item>
-
-              <Descriptions.Item
-                label={
-                  <span>
-                    <FileTextOutlined style={{ color: "#52c41a", marginRight: "8px" }} />
-                    Total de Notas
-                  </span>
-                }
-              >
-                <Tag
-                  color="green"
-                  style={{
-                    background: "linear-gradient(45deg, #52c41a, #73d13d)",
-                    border: "none",
-                    color: "white",
-                    fontWeight: "500",
-                    padding: "4px 12px",
-                    borderRadius: "6px",
-                  }}
+                <Descriptions.Item
+                  label={
+                    <span>
+                      <BuildOutlined style={{ color: "#fa8c16", marginRight: "8px" }} />
+                      Razão Social
+                    </span>
+                  }
                 >
-                  {empresaSelecionada.notas.length} notas
-                </Tag>
-              </Descriptions.Item>
-            </Descriptions>
-          </>
-        )}
+                  <Text strong>{empresaSelecionada.nomeRazaoSocial}</Text>
+                </Descriptions.Item>
+
+                <Descriptions.Item
+                  label={
+                    <span>
+                      <EnvironmentOutlined style={{ color: "#52c41a", marginRight: "8px" }} />
+                      Endereço
+                    </span>
+                  }
+                >
+                  {empresaSelecionada.endereco || "-"}
+                </Descriptions.Item>
+
+                <Descriptions.Item
+                  label={
+                    <span>
+                      <MailOutlined style={{ color: "#1890ff", marginRight: "8px" }} />
+                      E-mail de Contato
+                    </span>
+                  }
+                >
+                  {empresaSelecionada.contatoEmail || "-"}
+                </Descriptions.Item>
+
+                <Descriptions.Item
+                  label={
+                    <span>
+                      <PhoneOutlined style={{ color: "#fa8c16", marginRight: "8px" }} />
+                      Telefone de Contato
+                    </span>
+                  }
+                >
+                  {empresaSelecionada.contatoTelefone || "-"}
+                </Descriptions.Item>
+
+                <Descriptions.Item
+                  label={
+                    <span>
+                      <CalendarOutlined style={{ color: "#722ed1", marginRight: "8px" }} />
+                      Cadastrado em
+                    </span>
+                  }
+                >
+                  {empresaSelecionada.criadoEm ? new Date(empresaSelecionada.criadoEm).toLocaleString("pt-BR") : "-"}
+                </Descriptions.Item>
+
+                <Descriptions.Item
+                  label={
+                    <span>
+                      <FileTextOutlined style={{ color: "#52c41a", marginRight: "8px" }} />
+                      Total de Notas
+                    </span>
+                  }
+                >
+                  <Tag
+                    color="green"
+                    style={{
+                      background: "linear-gradient(45deg, #52c41a, #73d13d)",
+                      border: "none",
+                      color: "white",
+                      fontWeight: 500,
+                      padding: "4px 12px",
+                      borderRadius: "6px",
+                    }}
+                  >
+                    {empresaSelecionada.notas.length} notas
+                  </Tag>
+                </Descriptions.Item>
+              </Descriptions>
+            </>
+          )}
+        </Spin>
       </Modal>
 
       {/* Modal de Notas Auditadas */}
@@ -1457,7 +1933,7 @@ const EmpresasView: React.FC = () => {
             >
               <AuditOutlined style={{ color: "white", fontSize: "16px" }} />
             </div>
-            <span style={{ fontSize: "18px", fontWeight: "600" }}>
+            <span style={{ fontSize: "18px", fontWeight: 600 }}>
               Notas Fiscais Auditadas ({notasAuditadas.length})
             </span>
           </div>
@@ -1474,7 +1950,7 @@ const EmpresasView: React.FC = () => {
                 background: "linear-gradient(45deg, #1890ff, #40a9ff)",
                 border: "none",
                 borderRadius: "8px",
-                fontWeight: "600",
+                fontWeight: 600,
               }}
             >
               Exportar Todas
@@ -1496,12 +1972,6 @@ const EmpresasView: React.FC = () => {
               showSizeChanger: true,
               pageSizeOptions: ["10", "20", "50"],
               showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} notas`,
-            }}
-            style={{
-              ".ant-table-thead > tr > th": {
-                background: "linear-gradient(90deg, rgba(24, 144, 255, 0.05), rgba(250, 140, 22, 0.05))",
-                fontWeight: "600",
-              },
             }}
             expandable={{
               expandedRowRender: (record) => (
@@ -1534,6 +2004,96 @@ const EmpresasView: React.FC = () => {
               rowExpandable: (record) => record.produtosAuditados.length > 0,
             }}
           />
+        </Spin>
+      </Modal>
+
+      {/* Modal de Relatório Detalhado */}
+      <Modal
+        title={
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div
+              style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "50%",
+                background: "linear-gradient(45deg, #1890ff, #40a9ff)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginRight: "12px",
+              }}
+            >
+              <FileTextOutlined style={{ color: "white", fontSize: "16px" }} />
+            </div>
+            <span style={{ fontSize: "18px", fontWeight: 600 }}>Relatório Detalhado da Nota</span>
+          </div>
+        }
+        open={modalRelatorioVisible}
+        onCancel={() => setModalRelatorioVisible(false)}
+        footer={<Button onClick={() => setModalRelatorioVisible(false)}>Fechar</Button>}
+        width={800}
+        style={{ borderRadius: "12px" }}
+      >
+        <Spin spinning={loading || !relatorioSelecionado}>
+          {/* CORREÇÃO: Adicionada verificação para evitar erro de 'toFixed' em valor indefinido */}
+          {relatorioSelecionado && (
+            <Descriptions
+              bordered
+              column={1}
+              styles={{
+                label: {
+                  fontWeight: 600,
+                  background: "linear-gradient(90deg, rgba(24, 144, 255, 0.05), rgba(250, 140, 22, 0.05))",
+                  width: "250px",
+                },
+                content: {
+                  background: "#fafafa",
+                },
+              }}
+            >
+              <Descriptions.Item label="Chave da Nota">
+                <Tag
+                  color="blue"
+                  style={{
+                    background: "linear-gradient(45deg, #1890ff, #40a9ff)",
+                    border: "none",
+                    color: "white",
+                    fontWeight: 500,
+                    padding: "4px 12px",
+                    borderRadius: "6px",
+                  }}
+                >
+                  {relatorioSelecionado.chave}
+                </Tag>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Valor Produtos Monofásicos">
+                <Text strong>
+                  R$ {relatorioSelecionado.valorTotalProdutosMonofasicos?.toFixed(2) ?? '0.00'}
+                </Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Valor Total PIS">
+                <Text strong>R$ {relatorioSelecionado.valorTotalPis?.toFixed(2) ?? '0.00'}</Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Valor Total COFINS">
+                <Text strong>R$ {relatorioSelecionado.valorTotalCofins?.toFixed(2) ?? '0.00'}</Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Valor Restituição">
+                <Text strong style={{ color: relatorioSelecionado.direitoRestituicao ? "#52c41a" : "#ff4d4f" }}>
+                  R$ {relatorioSelecionado.valorRestituicao?.toFixed(2) ?? '0.00'}
+                </Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Direito à Restituição">
+                <Tag color={relatorioSelecionado.direitoRestituicao ? "success" : "error"}>
+                  {relatorioSelecionado.direitoRestituicao ? "SIM" : "NÃO"}
+                </Tag>
+              </Descriptions.Item>
+            </Descriptions>
+          )}
         </Spin>
       </Modal>
     </div>

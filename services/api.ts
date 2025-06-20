@@ -73,68 +73,6 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
   }
 }
 
-
-// export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-//   const url = `${API_BASE_URL}${API_PREFIX}${endpoint}`
-
-//   const defaultHeaders = {
-//     "Content-Type": "application/json",
-//     Accept: "application/json",
-//   }
-
-//   // Não definir Content-Type para requisições multipart/form-data
-//   const headers = options.body instanceof FormData ? { Accept: "application/json" } : defaultHeaders
-
-//   const config = {
-//     ...options,
-//     headers: {
-//       ...headers,
-//       ...options.headers,
-//     },
-//   }
-
-//   try {
-//     const response = await fetch(url, config)
-
-//     // Verifica se a resposta foi bem-sucedida
-//     if (!response.ok) {
-//       const errorData = await response.json().catch(() => ({}))
-//       throw new Error(errorData.message || `Erro ${response.status}: ${response.statusText}`)
-//     }
-
-//     // Para respostas vazias (204 No Content)
-//     if (response.status === 204) {
-//       return {} as T
-//     }
-
-//     // Para respostas de download de arquivo
-//     if (
-//       response.headers
-//         .get("Content-Type")
-//         ?.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-//     ) {
-//       const blob = await response.blob()
-//       return { blob } as unknown as T
-//     }
-
-//     // Tenta fazer o parse do JSON
-//     const data = await response.json()
-
-//     // Verifica se a resposta tem o formato { success, message, data }
-//     if (data && typeof data === "object" && "success" in data && "data" in data) {
-//       if (!data.success) {
-//         throw new Error(data.message || "Erro na requisição")
-//       }
-//       return data.data as T
-//     }
-
-//     return data as T
-//   } catch (error) {
-//     console.error("Erro na requisição:", error)
-//     throw error
-//   }
-// }
-
 export interface ProdutoComSelecao {
   id?: string;
   descricao: string;
@@ -153,16 +91,42 @@ export interface ProdutoComSelecao {
   selecionado: boolean;
 }
 
-
 export interface ProdutoNota {
   id: number;
-  chaveNota?: string; // se você tiver isso, ok
+  chaveNota?: string; // opcional, conforme já estava
   descricao: string;
   selecionado: boolean;
   valorProduto: number;
   valorNotaPis: number;
   valorNotaCofins: number;
+
+  // Novos campos adicionados para cálculos de diferença e final
+  valorTabelaPis: number;
+  valorTabelaCofins: number;
+  valorFinalPis: number;
+  valorFinalCofins: number;
+  valorDiferencaPis: number;
+  valorDiferencaCofins: number;
 }
+
+// Interface para os filtros
+interface AuditLogFilters {
+  usuarioEmail?: string;
+  cnpj?: string;
+}
+
+// Interface para o dado do log
+export interface AuditLog {
+  id: number;
+  gerenteId: number;
+  empresaId?: number;
+  notaChave?: string;
+  operacao: string;
+  usuario: string;
+  detalhes: string;
+  criadoEm: string;
+}
+
 
 export interface NotaComSelecao {
   chave: string;
@@ -270,6 +234,7 @@ export interface Produto {
 }
 
 export interface RelatorioNotaFiscalDTO {
+  produtosAuditados: any
   chave: string
   cnpjEmitente: string
   nomeRazaoSocial: string
@@ -371,6 +336,36 @@ export interface NotaFiscal {
   valorRestituicao: number;
 }
 
+export interface NotaFiscal {
+  id: string
+  chave: string
+  dataEmissao: string
+  valorTotal: number
+  totalPis: number
+  totalCofins: number
+  cnpjEmitente: string
+  nomeRazaoSocial: string
+  status: "processada" | "pendente" | "erro"
+}
+
+
+export interface ProdutoAuditado {
+  id: number
+  descricaoProduto: string
+}
+
+export interface RelatorioNotaDetalhado {
+  chave: string
+  cnpjEmitente: string
+  nomeRazaoSocial: string
+  dataEmissao: string
+  direitoRestituicao: boolean
+  valorRestituicao: number
+  produtosAuditados: ProdutoAuditado[]
+}
+
+
+
 
 
 // Serviços específicos para cada área da aplicação
@@ -381,16 +376,6 @@ export const dashboardService = {
 }
 
 // Upload e Análise de XML
-
-// export const xmlService = {
-//   analisarXml: (file: File) => {
-//     const fd = new FormData()
-//     fd.append("files", file)
-//     return fetchApi<AnaliseNota[]>("/analisar", {
-//       method: "POST",
-//       body: fd,
-//     })
-//   },
 
 export const xmlService = {
   // Agora recebe um FormData contendo um ou vários arquivos
@@ -495,14 +480,25 @@ export const empresasService = {
 
 // notas ficais por CNPJ
 
+// export const notasService = {
+//   listarPorEmpresaCnpj: (cnpj: string, chave?: string) => {
+//     const query = chave ? `?chave=${encodeURIComponent(chave)}` : '';
+//     return fetchApi<NotaFiscal[]>(`/notas/empresa/${cnpj}/chave${query}`);
+//   },
+// };
+
 export const notasService = {
-  listarPorEmpresaCnpj: (cnpj: string, chave?: string) => {
-    const query = chave ? `?chave=${encodeURIComponent(chave)}` : '';
-    return fetchApi<NotaFiscal[]>(`/notas/empresa/${cnpj}/chave${query}`);
+  // Buscar lista de notas por CNPJ
+  listarPorEmpresaCnpj: (cnpj: string): Promise<NotaFiscal[]> => {
+    return fetchApi<NotaFiscal[]>(`/notas/empresa/${cnpj}`, { method: "GET" });
   },
+
+  // Buscar relatório detalhado de uma nota específica
+  buscarRelatorioDetalhado: (cnpj: string, chave: string): Promise<RelatorioNotaDetalhado> => {
+    return fetchApi<RelatorioNotaDetalhado>(`/notas/empresa/${cnpj}/chave/${chave}`, { method: "GET" });
+  },
+
 };
-
-
 
 
 
@@ -577,51 +573,60 @@ export const authService = {
   },
 };
 
+// Tipos para usuários
+export interface CadastroUsuarioRequest {
+  nome: string
+  email: string
+  senha: string
+  perfil: "OPERADOR"
+  empresaId: number
+}
 
+export interface Usuario {
+  id: number
+  nome: string
+  email: string
+  perfil: string
+  empresaId?: number
+  criadoEm: string
+}
 
-// export const relatoriosService = {
-//   gerarRelatorioProdutos: (filtros: any) =>
-//     fetchApi<Produto[]>("/relatorios/produtos", {
-//       method: "POST",
-//       body: JSON.stringify(filtros),
-//     }),
+// Serviço de usuários
+export const usuariosService = {
+  // Cadastrar novo usuário (operador)
+  cadastrarUsuario: (usuario: CadastroUsuarioRequest): Promise<Usuario> => {
+    return fetchApi<Usuario>("/usuarios/cadastrar", {
+      method: "POST",
+      body: JSON.stringify(usuario),
+    })
+  },
 
-//   listarRelatoriosRestituicao: () => fetchApi<RelatorioRestituicao[]>("/relatorios/restituicoes"),
+  // Listar usuários (se necessário no futuro)
+  listarUsuarios: (): Promise<Usuario[]> => {
+    return fetchApi<Usuario[]>("/usuarios/listar")
+  },
+}
 
-// gerarNovaRestituicao: (periodo: string) =>
-//   fetchApi<RelatorioRestituicao>("/relatorios/restituicoes", {
-//     method: "POST",
-//     body: JSON.stringify({ periodo }),
-//   }),
+export const auditLogService = {
+  /**
+   * Busca os logs de auditoria para o time do gerente logado,
+   * aplicando filtros opcionais.
+   */
+  getLogsDoMeuTime: (filters: AuditLogFilters): Promise<AuditLog[]> => {
+    // 1. Cria os parâmetros de busca (query string) a partir do objeto de filtros
+    const params = new URLSearchParams();
+    if (filters.usuarioEmail) {
+      params.append("usuarioEmail", filters.usuarioEmail);
+    }
+    if (filters.cnpj) {
+      params.append("cnpj", filters.cnpj);
+    }
+    const queryString = params.toString();
 
-// downloadRelatorio: (id: string, formato: string) => {
-//   // Esta função retorna a URL para download
-//   return `${API_BASE_URL}${API_PREFIX}/relatorios/${id}/download?formato=${formato}`
-// },
+    // 2. Monta a URL final, adicionando a query string se houver filtros
+    const url = `/audit-logs/meu-time${queryString ? `?${queryString}` : ''}`;
 
-// Configurações
-// export const configuracoesService = {
-//   getEmpresa: () => fetchApi<EmpresaData>("/configuracoes/empresa"),
-
-//   salvarEmpresa: (dados: EmpresaData) =>
-//     fetchApi<void>("/configuracoes/empresa", {
-//       method: "POST",
-//       body: JSON.stringify(dados),
-//     }),
-
-//   getUsuario: () => fetchApi<UsuarioData>("/configuracoes/usuario"),
-
-//   salvarUsuario: (dados: UsuarioData) =>
-//     fetchApi<void>("/configuracoes/usuario", {
-//       method: "POST",
-//       body: JSON.stringify(dados),
-//     }),
-
-//   getConfiguracoes: () => fetchApi<ConfiguracoesData>("/configuracoes/sistema"),
-
-//   salvarConfiguracoes: (dados: ConfiguracoesData) =>
-//     fetchApi<void>("/configuracoes/sistema", {
-//       method: "POST",
-//       body: JSON.stringify(dados),
-//     }),
-
+    // 3. Chama a sua função fetchApi com a URL e o método GET
+    return fetchApi<AuditLog[]>(url); // O método GET é geralmente o padrão, então options pode ser omitido
+  },
+};
