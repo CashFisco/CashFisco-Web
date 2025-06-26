@@ -92,8 +92,6 @@ const UploadXml: React.FC = () => {
   const [showResumo, setShowResumo] = useState(false)
   const [mostrarFinalizar, setMostrarFinalizar] = useState(false);
 
-
-
   // Estados para análise em lote
   const [analysisMode, setAnalysisMode] = useState<"individual" | "batch">("individual")
   const [batchFiles, setBatchFiles] = useState<ProcessingFile[]>([])
@@ -425,8 +423,11 @@ const UploadXml: React.FC = () => {
 
       message.success("Tabela SPED aplicada e diferenças calculadas!")
 
+      const resumo = await xmlService.gerarRelatorio(selectedNota.chave)
+      setResumoRelatorio(resumo)
+      setShowResumo(true)
+      setMostrarFinalizar(true)
       setCurrentStep(2)
-      setMostrarFinalizar(false) // esconde o finalizar até gerar relatório
     } catch (err) {
       console.error(err)
       message.error("Erro ao atualizar tabela SPED")
@@ -434,7 +435,6 @@ const UploadXml: React.FC = () => {
       setLoading(false)
     }
   }
-
 
   const handleGerarRelatorio = async () => {
     if (!selectedNota) return;
@@ -471,17 +471,13 @@ const UploadXml: React.FC = () => {
   };
   const handleFinalizarProcesso = () => {
     if (selectedNota) {
-      setNotasFiscais((prev) => prev.filter((n) => n.chave !== selectedNota.chave))
-      setSelectedNota(null)
-      setCurrentStep(0)
-      setRelatorio(null)
-      setMostrarFinalizar(false) // esconde o botão finalizar
-      setShowResumo(false) // opcional: esconder resumo se usar
+      setNotasFiscais((prev) => prev.filter((n) => n.chave !== selectedNota.chave));
+      setSelectedNota(null);
+      setCurrentStep(0);
+      setRelatorio(null);
+      setMostrarFinalizar(false); // esconde o botão ao finalizar
     }
-  }
-
-
-
+  };
 
   // const handleFinalizarProcesso = () => {
   //   if (selectedNota) {
