@@ -2,21 +2,21 @@
 
 import { useState } from "react"
 import { Layout, Typography, theme } from "antd"
-import AppSidebar from "@/components/AppSidebar"
-import Dashboard from "@/components/Dashboard"
-import UploadXml from "@/components/upload-xml/UploadXml"
-import ProductsView from "@/components/produtos/ProdutosTabela"
-import Reports from "@/components/relatorios/Relatorio"
+import AppSidebar from "@/components/sidebar/AppSidebar"
+import Dashboard from "@/app/(main)/dashboard/Dashboard"
+import UploadXml from "@/app/(main)/upload-xml/UploadXml"
+import ProductsView from "@/app/(main)/produtos/ProdutosTabela"
+import Reports from "@/app/(main)/relatorios/Relatorio"
 import Settings from "@/components/configuracoes/Settings"
-import Empresa from "@/components/empresa/page"
-import CadastroUsuario from "@/components/usuarios/PaginaAdmin"
-import PaginaAdmin from "@/components/usuarios/PaginaAdmin"
+import Empresa from "@/app/(main)/empresa/page"
+import CadastroUsuario from "@/app/(main)/usuarios/PaginaAdmin"
+import PaginaAdmin from "@/app/(main)/usuarios/PaginaAdmin"
 
 const { Content } = Layout
 const { Title } = Typography
 
 export default function Home() {
-  const [currentPage, setCurrentPage] = useState<string>("dashboard")
+  const [currentPage, setCurrentPage] = useState<string>("login")
   const [darkMode, setDarkMode] = useState<boolean>(false)
   const {
     token: { colorBgContainer, borderRadiusLG },
@@ -67,3 +67,27 @@ export default function Home() {
     </Layout>
   )
 }
+
+
+// // Caminho: app/page.tsx
+// "use client";
+
+// import { useEffect } from 'react';
+// import { useRouter } from 'next/navigation';
+// import { Spin } from 'antd';
+
+// export default function RootPage() {
+//   const router = useRouter();
+
+//   useEffect(() => {
+//     // Redireciona o usuário da rota raiz "/" para a página de login
+//     router.replace('/login');
+//   }, [router]);
+
+//   // Exibe um carregamento para uma melhor experiência
+//   return (
+//     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+//       <Spin size="large" />
+//     </div>
+//   );
+// }

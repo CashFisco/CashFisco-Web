@@ -1,477 +1,273 @@
-// "use client"
-
-// import type React from "react"
-
-// import { useState, useEffect } from "react"
-// import { Typography, Card, Form, Input, Button, Tabs, Switch, Select, Divider, message, Space, Spin } from "antd"
-// import { SaveOutlined, UserOutlined, BankOutlined, SettingOutlined } from "@ant-design/icons"
-// import { configuracoesService, type EmpresaData, type UsuarioData, type ConfiguracoesData } from "@/services/api"
-
-// const { Title, Text } = Typography
-// const { TabPane } = Tabs
-// const { Option } = Select
-
-// const Settings: React.FC = () => {
-//   const [loadingEmpresa, setLoadingEmpresa] = useState<boolean>(false)
-//   const [loadingUsuario, setLoadingUsuario] = useState<boolean>(false)
-//   const [loadingConfig, setLoadingConfig] = useState<boolean>(false)
-//   const [loadingData, setLoadingData] = useState<boolean>(true)
-
-//   const [empresaForm] = Form.useForm<EmpresaData>()
-//   const [usuarioForm] = Form.useForm<UsuarioData>()
-//   const [configForm] = Form.useForm<ConfiguracoesData>()
-
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       try {
-//         setLoadingData(true)
-
-//         // Carregar dados da empresa
-//         const empresaData = await configuracoesService.getEmpresa()
-//         empresaForm.setFieldsValue(empresaData)
-
-//         // Carregar dados do usuário
-//         const usuarioData = await configuracoesService.getUsuario()
-//         usuarioForm.setFieldsValue(usuarioData)
-
-//         // Carregar configurações do sistema
-//         const configData = await configuracoesService.getConfiguracoes()
-//         configForm.setFieldsValue(configData)
-//       } catch (error) {
-//         console.error("Erro ao carregar configurações:", error)
-//         message.error("Erro ao carregar configurações")
-//       } finally {
-//         setLoadingData(false)
-//       }
-//     }
-
-//     fetchData()
-//   }, [empresaForm, usuarioForm, configForm])
-
-//   const handleSalvarEmpresa = async (values: EmpresaData) => {
-//     try {
-//       setLoadingEmpresa(true)
-//       await configuracoesService.salvarEmpresa(values)
-//       message.success("Dados da empresa salvos com sucesso!")
-//     } catch (error) {
-//       console.error("Erro ao salvar dados da empresa:", error)
-//       message.error("Erro ao salvar dados da empresa")
-//     } finally {
-//       setLoadingEmpresa(false)
-//     }
-//   }
-
-//   const handleSalvarUsuario = async (values: UsuarioData) => {
-//     try {
-//       setLoadingUsuario(true)
-//       await configuracoesService.salvarUsuario(values)
-//       message.success("Dados do usuário salvos com sucesso!")
-//     } catch (error) {
-//       console.error("Erro ao salvar dados do usuário:", error)
-//       message.error("Erro ao salvar dados do usuário")
-//     } finally {
-//       setLoadingUsuario(false)
-//     }
-//   }
-
-//   const handleSalvarConfiguracoes = async (values: ConfiguracoesData) => {
-//     try {
-//       setLoadingConfig(true)
-//       await configuracoesService.salvarConfiguracoes(values)
-//       message.success("Configurações do sistema salvas com sucesso!")
-//     } catch (error) {
-//       console.error("Erro ao salvar configurações do sistema:", error)
-//       message.error("Erro ao salvar configurações do sistema")
-//     } finally {
-//       setLoadingConfig(false)
-//     }
-//   }
-
-//   return (
-//     <div>
-//       <Title level={2}>Configurações</Title>
-//       <Text type="secondary">Gerencie as configurações do sistema</Text>
-
-//       <Spin spinning={loadingData}>
-//         <Tabs defaultActiveKey="empresa" style={{ marginTop: 16 }}>
-//           <TabPane
-//             tab={
-//               <span>
-//                 <BankOutlined /> Dados da Empresa
-//               </span>
-//             }
-//             key="empresa"
-//           >
-//             <Card>
-//               <Form form={empresaForm} layout="vertical" onFinish={handleSalvarEmpresa}>
-//                 <Form.Item
-//                   name="razaoSocial"
-//                   label="Razão Social"
-//                   rules={[{ required: true, message: "Por favor, informe a razão social" }]}
-//                 >
-//                   <Input placeholder="Informe a razão social" />
-//                 </Form.Item>
-
-//                 <Form.Item name="cnpj" label="CNPJ" rules={[{ required: true, message: "Por favor, informe o CNPJ" }]}>
-//                   <Input placeholder="XX.XXX.XXX/XXXX-XX" />
-//                 </Form.Item>
-
-//                 <Form.Item
-//                   name="endereco"
-//                   label="Endereço"
-//                   rules={[{ required: true, message: "Por favor, informe o endereço" }]}
-//                 >
-//                   <Input placeholder="Informe o endereço" />
-//                 </Form.Item>
-
-//                 <div style={{ display: "flex", gap: 16 }}>
-//                   <Form.Item
-//                     name="cidade"
-//                     label="Cidade"
-//                     rules={[{ required: true, message: "Por favor, informe a cidade" }]}
-//                     style={{ flex: 2 }}
-//                   >
-//                     <Input placeholder="Informe a cidade" />
-//                   </Form.Item>
-
-//                   <Form.Item
-//                     name="estado"
-//                     label="Estado"
-//                     rules={[{ required: true, message: "Por favor, informe o estado" }]}
-//                     style={{ flex: 1 }}
-//                   >
-//                     <Select placeholder="Selecione o estado">
-//                       <Option value="SP">São Paulo</Option>
-//                       <Option value="RJ">Rio de Janeiro</Option>
-//                       <Option value="MG">Minas Gerais</Option>
-//                       <Option value="RS">Rio Grande do Sul</Option>
-//                       <Option value="PR">Paraná</Option>
-//                       <Option value="SC">Santa Catarina</Option>
-//                       <Option value="BA">Bahia</Option>
-//                       <Option value="DF">Distrito Federal</Option>
-//                     </Select>
-//                   </Form.Item>
-
-//                   <Form.Item
-//                     name="cep"
-//                     label="CEP"
-//                     rules={[{ required: true, message: "Por favor, informe o CEP" }]}
-//                     style={{ flex: 1 }}
-//                   >
-//                     <Input placeholder="XXXXX-XXX" />
-//                   </Form.Item>
-//                 </div>
-
-//                 <div style={{ display: "flex", gap: 16 }}>
-//                   <Form.Item
-//                     name="telefone"
-//                     label="Telefone"
-//                     rules={[{ required: true, message: "Por favor, informe o telefone" }]}
-//                     style={{ flex: 1 }}
-//                   >
-//                     <Input placeholder="(XX) XXXX-XXXX" />
-//                   </Form.Item>
-
-//                   <Form.Item
-//                     name="email"
-//                     label="E-mail"
-//                     rules={[
-//                       { required: true, message: "Por favor, informe o e-mail" },
-//                       { type: "email", message: "Por favor, informe um e-mail válido" },
-//                     ]}
-//                     style={{ flex: 2 }}
-//                   >
-//                     <Input placeholder="exemplo@empresa.com" />
-//                   </Form.Item>
-//                 </div>
-
-//                 <Divider />
-
-//                 <Form.Item>
-//                   <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loadingEmpresa}>
-//                     Salvar Dados da Empresa
-//                   </Button>
-//                 </Form.Item>
-//               </Form>
-//             </Card>
-//           </TabPane>
-
-//           <TabPane
-//             tab={
-//               <span>
-//                 <UserOutlined /> Dados do Usuário
-//               </span>
-//             }
-//             key="usuario"
-//           >
-//             <Card>
-//               <Form form={usuarioForm} layout="vertical" onFinish={handleSalvarUsuario}>
-//                 <Form.Item name="nome" label="Nome" rules={[{ required: true, message: "Por favor, informe o nome" }]}>
-//                   <Input placeholder="Informe o nome" />
-//                 </Form.Item>
-
-//                 <Form.Item
-//                   name="email"
-//                   label="E-mail"
-//                   rules={[
-//                     { required: true, message: "Por favor, informe o e-mail" },
-//                     { type: "email", message: "Por favor, informe um e-mail válido" },
-//                   ]}
-//                 >
-//                   <Input placeholder="exemplo@empresa.com" />
-//                 </Form.Item>
-
-//                 <Form.Item
-//                   name="cargo"
-//                   label="Cargo"
-//                   rules={[{ required: true, message: "Por favor, informe o cargo" }]}
-//                 >
-//                   <Select placeholder="Selecione o cargo">
-//                     <Option value="Administrador">Administrador</Option>
-//                     <Option value="Contador">Contador</Option>
-//                     <Option value="Analista">Analista</Option>
-//                     <Option value="Gerente">Gerente</Option>
-//                   </Select>
-//                 </Form.Item>
-
-//                 <Divider />
-
-//                 <Space>
-//                   <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loadingUsuario}>
-//                     Salvar Dados do Usuário
-//                   </Button>
-
-//                   <Button onClick={() => message.info("Funcionalidade em desenvolvimento")}>Alterar Senha</Button>
-//                 </Space>
-//               </Form>
-//             </Card>
-//           </TabPane>
-
-//           <TabPane
-//             tab={
-//               <span>
-//                 <SettingOutlined /> Configurações do Sistema
-//               </span>
-//             }
-//             key="configuracoes"
-//           >
-//             <Card>
-//               <Form form={configForm} layout="vertical" onFinish={handleSalvarConfiguracoes}>
-//                 <Form.Item name="notificacoesEmail" label="Receber notificações por e-mail" valuePropName="checked">
-//                   <Switch />
-//                 </Form.Item>
-
-//                 <Form.Item name="temaEscuro" label="Tema escuro" valuePropName="checked">
-//                   <Switch />
-//                 </Form.Item>
-
-//                 <Form.Item name="formatoRelatorio" label="Formato padrão de relatórios">
-//                   <Select>
-//                     <Option value="pdf">PDF</Option>
-//                     <Option value="excel">Excel</Option>
-//                     <Option value="csv">CSV</Option>
-//                   </Select>
-//                 </Form.Item>
-
-//                 <Form.Item name="idioma" label="Idioma">
-//                   <Select>
-//                     <Option value="pt-BR">Português (Brasil)</Option>
-//                     <Option value="en-US">English (United States)</Option>
-//                     <Option value="es">Español</Option>
-//                   </Select>
-//                 </Form.Item>
-
-//                 <Divider />
-
-//                 <Form.Item>
-//                   <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loadingConfig}>
-//                     Salvar Configurações
-//                   </Button>
-//                 </Form.Item>
-//               </Form>
-//             </Card>
-//           </TabPane>
-//         </Tabs>
-//       </Spin>
-//     </div>
-//   )
-// }
-
-// export default Settings
-
-
 "use client"
-
-import type React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import {
   Typography,
   Card,
   Form,
   Input,
   Button,
-  Tabs,
-  Switch,
-  Select,
-  Divider,
   message,
-  Space,
-  Spin,
-  InputNumber,
   Alert,
+  Spin,
+  Tabs,
+  Table,
+  Tag,
+  Select,
+  DatePicker,
+  InputNumber,
+  Row,
+  Col,
+  Badge,
 } from "antd"
-import { SaveOutlined, BankOutlined, SettingOutlined, UserAddOutlined } from "@ant-design/icons"
+import {
+  SaveOutlined,
+  MailOutlined,
+  LockOutlined,
+  TeamOutlined,
+  BankOutlined,
+  ClockCircleOutlined,
+  EnvironmentOutlined,
+  DollarOutlined,
+  UserOutlined,
+  CrownOutlined,
+  CheckOutlined,
+} from "@ant-design/icons"
 import { useAuth } from "@/contexts/AuthContext"
+import { usuariosService, clientesService, type Cliente, type CadastroGerenteRequest } from "@/services/api"
+import type { ColumnsType } from "antd/es/table"
+import dayjs from "dayjs"
+import "dayjs/locale/pt-br"
+
+dayjs.locale("pt-br")
 
 const { Title, Text } = Typography
 const { Option } = Select
+const { TabPane } = Tabs
 
-interface EmpresaData {
-  razaoSocial: string
-  cnpj: string
-  endereco: string
-  cidade: string
-  estado: string
-  cep: string
-  telefone: string
-  email: string
-}
-
-interface ConfiguracoesData {
-  notificacoesEmail: boolean
-  temaEscuro: boolean
-  formatoRelatorio: "pdf" | "excel" | "csv"
-  idioma: "pt-BR" | "en-US" | "es"
-}
-
-interface CadastroGerenteData {
-  nome: string
-  email: string
-  senha: string
-  perfil: "GERENTE"
-  limiteOperadores: number
-}
-
-import { configuracoesService, type EmpresaData, type UsuarioData, type ConfiguracoesData } from "@/services/api"
-
-const Settings: React.FC = () => {
-  const router = useRouter()
+export default function SettingsPage() {
   const { perfil } = useAuth()
-  const [loadingEmpresa, setLoadingEmpresa] = useState<boolean>(false)
-  const [loadingGerente, setLoadingGerente] = useState<boolean>(false)
-  const [loadingConfig, setLoadingConfig] = useState<boolean>(false)
-  const [loadingData, setLoadingData] = useState<boolean>(true)
 
-  const [empresaForm] = Form.useForm<EmpresaData>()
-  const [gerenteForm] = Form.useForm<CadastroGerenteData>()
-  const [configForm] = Form.useForm<ConfiguracoesData>()
+  const [clienteForm] = Form.useForm<Cliente>()
+  const [gerenteForm] = Form.useForm<CadastroGerenteRequest>()
 
-  // Verificar se o usuário é ADMIN
-  useEffect(() => {
-    if (perfil && perfil.toUpperCase() !== "ADMIN") {
-      message.error("Acesso negado. Apenas administradores podem acessar esta página.")
-      router.push("/")
-      return
-    }
-  }, [perfil, router])
+  const [loading, setLoading] = useState(false)
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [loadingClientes, setLoadingClientes] = useState(true)
 
-  useEffect(() => {
-    if (perfil?.toUpperCase() !== "ADMIN") return
-
-    const fetchData = async () => {
-      try {
-        setLoadingData(true)
-
-        // Carregar dados da empresa
-        const empresaData = await configuracoesService.getEmpresa()
-        empresaForm.setFieldsValue(empresaData)
-
-        // Carregar configurações do sistema
-        const configData = await configuracoesService.getConfiguracoes()
-        configForm.setFieldsValue(configData)
-      } catch (error) {
-        console.error("Erro ao carregar configurações:", error)
-        message.error("Erro ao carregar configurações")
-      } finally {
-        setLoadingData(false)
-      }
-    }
-
-    fetchData()
-  }, [empresaForm, configForm, perfil])
-
-  // Se não for ADMIN, não renderizar nada
-  if (!perfil || perfil.toUpperCase() !== "ADMIN") {
-    return null
-  }
-
-  const handleSalvarEmpresa = async (values: EmpresaData) => {
+  const fetchClientes = async () => {
+    setLoadingClientes(true)
     try {
-      setLoadingEmpresa(true)
-      await configuracoesService.salvarEmpresa(values)
-      message.success("Dados da empresa salvos com sucesso!")
+      const data = await clientesService.listarClientes()
+      setClientes(data)
     } catch (error) {
-      console.error("Erro ao salvar dados da empresa:", error)
-      message.error("Erro ao salvar dados da empresa")
+      message.error("Falha ao carregar lista de clientes.")
     } finally {
-      setLoadingEmpresa(false)
+      setLoadingClientes(false)
     }
   }
 
-  const handleCadastrarGerente = async (values: CadastroGerenteData) => {
-    try {
-      setLoadingGerente(true)
+  useEffect(() => {
+    // Apenas carrega os dados se o usuário for ADMIN
+    if (perfil === "ADMIN") {
+      fetchClientes()
+    }
+  }, [perfil])
 
+  const handleCadastrarCliente = async (values: any) => {
+    setLoading(true)
+    try {
       const payload = {
-        nome: values.nome,
-        email: values.email,
-        senha: values.senha,
-        perfil: "GERENTE",
-        limiteOperadores: values.limiteOperadores,
+        ...values,
+        dataAquisicaoPlano: dayjs(values.dataAquisicaoPlano).format("YYYY-MM-DD"),
+        dataFinalPlano: dayjs(values.dataFinalPlano).format("YYYY-MM-DD"),
       }
-
-      const response = await fetch("http://localhost:8080/cashfisco-ws/usuarios/cadastrar", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        message.success(result.message || "Gerente cadastrado com sucesso!")
-        gerenteForm.resetFields()
-      } else {
-        message.error(result.message || "Erro ao cadastrar gerente")
-      }
-    } catch (error) {
-      console.error("Erro ao cadastrar gerente:", error)
-      message.error("Erro ao cadastrar gerente")
+      await clientesService.cadastrarCliente(payload)
+      message.success("Cliente cadastrado com sucesso!")
+      clienteForm.resetFields()
+      fetchClientes() // Atualiza a lista na outra aba
+    } catch (error: any) {
+      message.error(error.message || "Erro ao cadastrar cliente.")
     } finally {
-      setLoadingGerente(false)
+      setLoading(false)
     }
   }
 
-  const handleSalvarConfiguracoes = async (values: ConfiguracoesData) => {
+  const handleCadastrarGerente = async (values: CadastroGerenteRequest) => {
+    setLoading(true)
     try {
-      setLoadingConfig(true)
-      await configuracoesService.salvarConfiguracoes(values)
-      message.success("Configurações do sistema salvas com sucesso!")
-    } catch (error) {
-      console.error("Erro ao salvar configurações do sistema:", error)
-      message.error("Erro ao salvar configurações do sistema")
+      const payload = { ...values, perfil: "GERENTE" as const }
+      await usuariosService.cadastrarGerente(payload)
+      message.success("Gerente cadastrado com sucesso!")
+      gerenteForm.resetFields()
+    } catch (error: any) {
+      message.error(error.message || "Erro ao cadastrar gerente.")
     } finally {
-      setLoadingConfig(false)
+      setLoading(false)
     }
   }
+
+  const renderAlertaVencimento = (dataFinal: string) => {
+    const hoje = dayjs()
+    const dataVencimento = dayjs(dataFinal)
+    const diasRestantes = dataVencimento.diff(hoje, "day")
+
+    if (diasRestantes < 0) {
+      return (
+        <Tag
+          color="error"
+          style={{
+            background: "linear-gradient(45deg, #ff4d4f, #ff7875)",
+            border: "none",
+            color: "white",
+            fontWeight: "600",
+            borderRadius: "6px",
+          }}
+        >
+          Vencido há {Math.abs(diasRestantes)} dias
+        </Tag>
+      )
+    }
+    if (diasRestantes <= 15) {
+      return (
+        <Tag
+          color="warning"
+          icon={<ClockCircleOutlined />}
+          style={{
+            background: "linear-gradient(45deg, #fa8c16, #ffa940)",
+            border: "none",
+            color: "white",
+            fontWeight: "600",
+            borderRadius: "6px",
+          }}
+        >
+          Vence em {diasRestantes} dias
+        </Tag>
+      )
+    }
+    return (
+      <Tag
+        color="success"
+        style={{
+          background: "linear-gradient(45deg, #52c41a, #73d13d)",
+          border: "none",
+          color: "white",
+          fontWeight: "600",
+          borderRadius: "6px",
+        }}
+      >
+        Vence em {diasRestantes} dias
+      </Tag>
+    )
+  }
+
+  const columns: ColumnsType<Cliente> = [
+    {
+      title: "Nome / Razão Social",
+      dataIndex: "nomeRazaoSocial",
+      key: "nomeRazaoSocial",
+      render: (text) => (
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <UserOutlined style={{ color: "#1890ff", marginRight: "8px" }} />
+          <Text strong style={{ color: "#262626" }}>
+            {text}
+          </Text>
+        </div>
+      ),
+      sorter: (a, b) => a.nomeRazaoSocial.localeCompare(b.nomeRazaoSocial),
+    },
+    {
+      title: "CPF / CNPJ",
+      dataIndex: "cpfCnpj",
+      key: "cpfCnpj",
+      render: (text) => (
+        <Tag
+          style={{
+            background: "linear-gradient(45deg, #1890ff, #40a9ff)",
+            border: "none",
+            color: "white",
+            fontWeight: "500",
+            padding: "4px 12px",
+            borderRadius: "6px",
+            fontFamily: "monospace",
+          }}
+        >
+          {text}
+        </Tag>
+      ),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => (
+        <Tag
+          color={status === "ATIVO" ? "success" : "error"}
+          style={{
+            borderRadius: "6px",
+            fontWeight: "600",
+            padding: "4px 12px",
+          }}
+        >
+          {status}
+        </Tag>
+      ),
+    },
+    {
+      title: "Plano",
+      dataIndex: "tipoPlano",
+      key: "tipoPlano",
+      render: (plano) => (
+        <Tag
+          style={{
+            background: "linear-gradient(45deg, #fa8c16, #ffa940)",
+            border: "none",
+            color: "white",
+            fontWeight: "600",
+            borderRadius: "6px",
+            padding: "4px 12px",
+          }}
+        >
+          {plano}
+        </Tag>
+      ),
+    },
+    {
+      title: "Vencimento",
+      dataIndex: "dataFinalPlano",
+      key: "dataFinalPlano",
+      render: (text) => renderAlertaVencimento(text),
+      sorter: (a, b) => dayjs(a.dataFinalPlano).unix() - dayjs(b.dataFinalPlano).unix(),
+    },
+  ]
 
   const cardStyle = {
     borderRadius: "12px",
     border: "none",
     boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+  }
+
+  const inputStyle = {
+    borderRadius: "8px",
+    height: "40px",
+    border: "2px solid #f0f0f0",
+    transition: "all 0.3s",
+  }
+
+  // Proteção de rota: apenas ADMIN pode ver esta página
+  if (perfil !== "ADMIN") {
+    return (
+      <div style={{ padding: "24px", background: "#f5f5f5", minHeight: "100vh" }}>
+        <Card style={cardStyle}>
+          <Alert
+            message="Acesso Negado"
+            description="Esta área é exclusiva para Administradores do sistema."
+            type="error"
+            showIcon
+            style={{ borderRadius: "8px" }}
+          />
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -488,7 +284,7 @@ const Settings: React.FC = () => {
               marginRight: "16px",
             }}
           />
-          <SettingOutlined
+          <CheckOutlined
             style={{
               fontSize: "24px",
               color: "#1890ff",
@@ -496,371 +292,427 @@ const Settings: React.FC = () => {
             }}
           />
           <Title level={2} style={{ margin: 0, color: "#262626" }}>
-            Configurações do Sistema
+            Painel do Administrador
           </Title>
         </div>
         <Text type="secondary" style={{ fontSize: "16px", marginLeft: "52px" }}>
-          Gerencie as configurações e usuários do sistema CashFisco
+          Gerencie clientes e usuários Gerentes do sistema CashFisco
         </Text>
       </div>
 
-      {/* Alert de Acesso Restrito */}
-      <Alert
-        message="Área Restrita"
-        description="Esta área é exclusiva para administradores do sistema."
-        type="info"
-        showIcon
-        style={{
-          marginBottom: "24px",
-          borderRadius: "8px",
-          border: "1px solid #1890ff",
-          backgroundColor: "#e6f7ff",
-        }}
-      />
-
-      <Spin spinning={loadingData}>
+      {/* Main Card */}
+      <Card style={cardStyle}>
         <Tabs
-          defaultActiveKey="empresa"
-          style={{ marginTop: 16 }}
-          items={[
-            {
-              key: "empresa",
-              label: (
-                <span style={{ display: "flex", alignItems: "center" }}>
-                  <BankOutlined style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Dados da Empresa
-                </span>
-              ),
-              children: (
-                <Card style={cardStyle}>
-                  <Form form={empresaForm} layout="vertical" onFinish={handleSalvarEmpresa}>
+          defaultActiveKey="1"
+          size="large"
+          className="custom-tabs"
+        >
+          {/* Tab 1: Lista de Clientes */}
+          <TabPane
+            tab={
+              <span style={{ fontSize: "16px" }}>
+                <TeamOutlined style={{ color: "#1890ff", marginRight: "8px" }} />
+                Clientes
+                <Badge
+                  count={clientes.length}
+                  style={{
+                    backgroundColor: "#fa8c16",
+                    marginLeft: "8px",
+                  }}
+                />
+              </span>
+            }
+            key="1"
+          >
+            <div style={{ marginBottom: "24px" }}>
+              <Title level={4} style={{ color: "#262626", marginBottom: "8px" }}>
+                Lista de Clientes Cadastrados
+              </Title>
+              <Text type="secondary">Visualize e gerencie todos os clientes do sistema</Text>
+            </div>
+
+            <Spin spinning={loadingClientes}>
+              <Table
+                dataSource={clientes}
+                columns={columns}
+                rowKey="cpfCnpj"
+                className="custom-table"
+                pagination={{
+                  pageSize: 10,
+                  showSizeChanger: true,
+                  pageSizeOptions: ["10", "20", "50"],
+                  showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} clientes`,
+                }}
+              />
+
+            </Spin>
+          </TabPane>
+
+          {/* Tab 2: Cadastrar Cliente */}
+          <TabPane
+            tab={
+              <span style={{ fontSize: "16px" }}>
+                <BankOutlined style={{ color: "#fa8c16", marginRight: "8px" }} />
+                Cadastrar Cliente
+              </span>
+            }
+            key="2"
+          >
+            <div style={{ marginBottom: "32px" }}>
+              <Title level={4} style={{ color: "#262626", marginBottom: "8px" }}>
+                Cadastro de Novo Cliente
+              </Title>
+              <Text type="secondary">Preencha os dados do cliente para cadastro no sistema</Text>
+            </div>
+
+            <Form form={clienteForm} layout="vertical" onFinish={handleCadastrarCliente}>
+              {/* Dados Pessoais */}
+              <Card
+                size="small"
+                title={
+                  <span>
+                    <UserOutlined style={{ color: "#1890ff", marginRight: "8px" }} />
+                    Dados Pessoais
+                  </span>
+                }
+                style={{ marginBottom: "24px", borderRadius: "8px" }}
+              >
+                <Row gutter={24}>
+                  <Col span={12}>
                     <Form.Item
-                      name="razaoSocial"
-                      label={<span style={{ fontWeight: "500" }}>Razão Social</span>}
-                      rules={[{ required: true, message: "Por favor, informe a razão social" }]}
+                      name="nomeRazaoSocial"
+                      label={<span style={{ fontWeight: "500" }}>Nome / Razão Social</span>}
+                      rules={[{ required: true, message: "Campo obrigatório" }]}
                     >
-                      <Input placeholder="Informe a razão social" style={{ borderRadius: "8px", height: "40px" }} />
+                      <Input placeholder="Digite o nome ou razão social" style={inputStyle} autoComplete="off" />
                     </Form.Item>
-
+                  </Col>
+                  <Col span={12}>
                     <Form.Item
-                      name="cnpj"
-                      label={<span style={{ fontWeight: "500" }}>CNPJ</span>}
-                      rules={[{ required: true, message: "Por favor, informe o CNPJ" }]}
+                      name="cpfCnpj"
+                      label={<span style={{ fontWeight: "500" }}>CPF/CNPJ</span>}
+                      rules={[{ required: true, message: "Campo obrigatório" }]}
                     >
-                      <Input placeholder="XX.XXX.XXX/XXXX-XX" style={{ borderRadius: "8px", height: "40px" }} />
+                      <Input placeholder="Digite o CPF ou CNPJ" style={inputStyle} autoComplete="off" />
                     </Form.Item>
+                  </Col>
+                </Row>
+              </Card>
 
-                    <Form.Item
-                      name="endereco"
-                      label={<span style={{ fontWeight: "500" }}>Endereço</span>}
-                      rules={[{ required: true, message: "Por favor, informe o endereço" }]}
-                    >
-                      <Input placeholder="Informe o endereço" style={{ borderRadius: "8px", height: "40px" }} />
-                    </Form.Item>
-
-                    <div style={{ display: "flex", gap: 16 }}>
-                      <Form.Item
-                        name="cidade"
-                        label={<span style={{ fontWeight: "500" }}>Cidade</span>}
-                        rules={[{ required: true, message: "Por favor, informe a cidade" }]}
-                        style={{ flex: 2 }}
-                      >
-                        <Input placeholder="Informe a cidade" style={{ borderRadius: "8px", height: "40px" }} />
-                      </Form.Item>
-
-                      <Form.Item
-                        name="estado"
-                        label={<span style={{ fontWeight: "500" }}>Estado</span>}
-                        rules={[{ required: true, message: "Por favor, informe o estado" }]}
-                        style={{ flex: 1 }}
-                      >
-                        <Select placeholder="Selecione o estado" style={{ height: "40px" }}>
-                          <Option value="SP">São Paulo</Option>
-                          <Option value="RJ">Rio de Janeiro</Option>
-                          <Option value="MG">Minas Gerais</Option>
-                          <Option value="RS">Rio Grande do Sul</Option>
-                          <Option value="PR">Paraná</Option>
-                          <Option value="SC">Santa Catarina</Option>
-                          <Option value="BA">Bahia</Option>
-                          <Option value="DF">Distrito Federal</Option>
-                        </Select>
-                      </Form.Item>
-
-                      <Form.Item
-                        name="cep"
-                        label={<span style={{ fontWeight: "500" }}>CEP</span>}
-                        rules={[{ required: true, message: "Por favor, informe o CEP" }]}
-                        style={{ flex: 1 }}
-                      >
-                        <Input placeholder="XXXXX-XXX" style={{ borderRadius: "8px", height: "40px" }} />
-                      </Form.Item>
-                    </div>
-
-                    <div style={{ display: "flex", gap: 16 }}>
-                      <Form.Item
-                        name="telefone"
-                        label={<span style={{ fontWeight: "500" }}>Telefone</span>}
-                        rules={[{ required: true, message: "Por favor, informe o telefone" }]}
-                        style={{ flex: 1 }}
-                      >
-                        <Input placeholder="(XX) XXXX-XXXX" style={{ borderRadius: "8px", height: "40px" }} />
-                      </Form.Item>
-
-                      <Form.Item
-                        name="email"
-                        label={<span style={{ fontWeight: "500" }}>E-mail</span>}
-                        rules={[
-                          { required: true, message: "Por favor, informe o e-mail" },
-                          { type: "email", message: "Por favor, informe um e-mail válido" },
-                        ]}
-                        style={{ flex: 2 }}
-                      >
-                        <Input placeholder="exemplo@empresa.com" style={{ borderRadius: "8px", height: "40px" }} />
-                      </Form.Item>
-                    </div>
-
-                    <Divider />
-
-                    <Form.Item>
-                      <Button
-                        type="primary"
-                        htmlType="submit"
-                        icon={<SaveOutlined />}
-                        loading={loadingEmpresa}
-                        size="large"
-                        style={{
-                          background: "linear-gradient(45deg, #1890ff, #40a9ff)",
-                          border: "none",
-                          borderRadius: "8px",
-                          fontWeight: "600",
-                          height: "48px",
-                          boxShadow: "0 4px 12px rgba(24, 144, 255, 0.3)",
-                        }}
-                      >
-                        Salvar Dados da Empresa
-                      </Button>
-                    </Form.Item>
-                  </Form>
-                </Card>
-              ),
-            },
-            {
-              key: "gerente",
-              label: (
-                <span style={{ display: "flex", alignItems: "center" }}>
-                  <UserAddOutlined style={{ marginRight: "8px", color: "#fa8c16" }} />
-                  Cadastrar Gerente
-                </span>
-              ),
-              children: (
-                <Card style={cardStyle}>
-                  <div style={{ marginBottom: "24px" }}>
-                    <Title level={4} style={{ margin: 0, color: "#262626" }}>
-                      <UserAddOutlined style={{ color: "#fa8c16", marginRight: "8px" }} />
-                      Cadastro de Novo Gerente
-                    </Title>
-                    <Text type="secondary">
-                      Cadastre um novo gerente e defina o limite de operadores que ele pode gerenciar
-                    </Text>
-                  </div>
-
-                  <Form form={gerenteForm} layout="vertical" onFinish={handleCadastrarGerente}>
-                    <Form.Item
-                      name="nome"
-                      label={<span style={{ fontWeight: "500" }}>Nome Completo</span>}
-                      rules={[
-                        { required: true, message: "Por favor, informe o nome" },
-                        { min: 3, message: "Nome deve ter pelo menos 3 caracteres" },
-                      ]}
-                    >
-                      <Input
-                        placeholder="Informe o nome completo do gerente"
-                        style={{ borderRadius: "8px", height: "40px" }}
-                      />
-                    </Form.Item>
-
+              {/* Contato */}
+              <Card
+                size="small"
+                title={
+                  <span>
+                    <MailOutlined style={{ color: "#fa8c16", marginRight: "8px" }} />
+                    Informações de Contato
+                  </span>
+                }
+                style={{ marginBottom: "24px", borderRadius: "8px" }}
+              >
+                <Row gutter={24}>
+                  <Col span={12}>
                     <Form.Item
                       name="email"
                       label={<span style={{ fontWeight: "500" }}>E-mail</span>}
                       rules={[
-                        { required: true, message: "Por favor, informe o e-mail" },
-                        { type: "email", message: "Por favor, informe um e-mail válido" },
+                        { required: true, message: "Campo obrigatório" },
+                        { type: "email", message: "E-mail inválido" },
                       ]}
                     >
-                      <Input placeholder="exemplo@empresa.com" style={{ borderRadius: "8px", height: "40px" }} />
+                      <Input placeholder="Digite o e-mail" style={inputStyle} autoComplete="off" />
                     </Form.Item>
-
+                  </Col>
+                  <Col span={6}>
                     <Form.Item
-                      name="senha"
-                      label={<span style={{ fontWeight: "500" }}>Senha Inicial</span>}
-                      rules={[
-                        { required: true, message: "Por favor, informe a senha" },
-                        { min: 6, message: "Senha deve ter pelo menos 6 caracteres" },
-                      ]}
+                      name="telefone"
+                      label={<span style={{ fontWeight: "500" }}>Telefone</span>}
+                      rules={[{ required: true, message: "Campo obrigatório" }]}
                     >
-                      <Input.Password
-                        placeholder="Informe a senha inicial (mínimo 6 caracteres)"
-                        style={{ borderRadius: "8px", height: "40px" }}
-                      />
+                      <Input placeholder="(XX) XXXX-XXXX" style={inputStyle} autoComplete="off" />
                     </Form.Item>
-
+                  </Col>
+                  <Col span={6}>
                     <Form.Item
-                      name="limiteOperadores"
-                      label={<span style={{ fontWeight: "500" }}>Limite de Operadores</span>}
-                      rules={[
-                        { required: true, message: "Por favor, informe o limite de operadores" },
-                        { type: "number", min: 1, max: 50, message: "Limite deve ser entre 1 e 50" },
-                      ]}
+                      name="whatsapp"
+                      label={<span style={{ fontWeight: "500" }}>WhatsApp</span>}
+                      rules={[{ required: true, message: "Campo obrigatório" }]}
                     >
-                      <InputNumber
-                        placeholder="Quantidade máxima de operadores"
-                        min={1}
-                        max={50}
-                        style={{
-                          borderRadius: "8px",
-                          height: "40px",
-                          width: "100%",
-                        }}
-                        addonAfter="operadores"
-                      />
+                      <Input placeholder="(XX) XXXXX-XXXX" style={inputStyle} autoComplete="off" />
                     </Form.Item>
+                  </Col>
+                </Row>
+              </Card>
 
-                    <div
-                      style={{
-                        background: "rgba(250, 140, 22, 0.05)",
-                        border: "1px solid rgba(250, 140, 22, 0.2)",
-                        borderRadius: "8px",
-                        padding: "16px",
-                        marginBottom: "24px",
-                      }}
-                    >
-                      <Text strong style={{ color: "#fa8c16" }}>
-                        Informações Importantes:
-                      </Text>
-                      <ul style={{ marginTop: "8px", marginBottom: 0 }}>
-                        <li>
-                          <Text type="secondary">O perfil será automaticamente definido como GERENTE</Text>
-                        </li>
-                        <li>
-                          <Text type="secondary">O gerente poderá cadastrar operadores até o limite definido</Text>
-                        </li>
-                        <li>
-                          <Text type="secondary">A senha inicial deve ser alterada no primeiro acesso</Text>
-                        </li>
-                      </ul>
-                    </div>
-
-                    <Divider />
-
-                    <Form.Item>
-                      <Space>
-                        <Button
-                          type="primary"
-                          htmlType="submit"
-                          icon={<UserAddOutlined />}
-                          loading={loadingGerente}
-                          size="large"
-                          style={{
-                            background: "linear-gradient(45deg, #fa8c16, #ffa940)",
-                            border: "none",
-                            borderRadius: "8px",
-                            fontWeight: "600",
-                            height: "48px",
-                            boxShadow: "0 4px 12px rgba(250, 140, 22, 0.3)",
-                          }}
-                        >
-                          Cadastrar Gerente
-                        </Button>
-
-                        <Button
-                          onClick={() => gerenteForm.resetFields()}
-                          size="large"
-                          style={{ borderRadius: "8px", height: "48px" }}
-                        >
-                          Limpar Formulário
-                        </Button>
-                      </Space>
-                    </Form.Item>
-                  </Form>
-                </Card>
-              ),
-            },
-            {
-              key: "configuracoes",
-              label: (
-                <span style={{ display: "flex", alignItems: "center" }}>
-                  <SettingOutlined style={{ marginRight: "8px", color: "#52c41a" }} />
-                  Configurações do Sistema
-                </span>
-              ),
-              children: (
-                <Card style={cardStyle}>
-                  <Form form={configForm} layout="vertical" onFinish={handleSalvarConfiguracoes}>
+              {/* Endereço */}
+              <Card
+                size="small"
+                title={
+                  <span>
+                    <EnvironmentOutlined style={{ color: "#52c41a", marginRight: "8px" }} />
+                    Endereço
+                  </span>
+                }
+                style={{ marginBottom: "24px", borderRadius: "8px" }}
+              >
+                <Row gutter={24}>
+                  <Col span={12}>
                     <Form.Item
-                      name="notificacoesEmail"
-                      label={<span style={{ fontWeight: "500" }}>Receber notificações por e-mail</span>}
-                      valuePropName="checked"
+                      name="endereco"
+                      label={<span style={{ fontWeight: "500" }}>Endereço</span>}
+                      rules={[{ required: true, message: "Campo obrigatório" }]}
                     >
-                      <Switch />
+                      <Input placeholder="Digite o endereço completo" style={inputStyle} autoComplete="off" />
                     </Form.Item>
-
+                  </Col>
+                  <Col span={4}>
                     <Form.Item
-                      name="temaEscuro"
-                      label={<span style={{ fontWeight: "500" }}>Tema escuro</span>}
-                      valuePropName="checked"
+                      name="cep"
+                      label={<span style={{ fontWeight: "500" }}>CEP</span>}
+                      rules={[{ required: true, message: "Campo obrigatório" }]}
                     >
-                      <Switch />
+                      <Input placeholder="00000-000" style={inputStyle} autoComplete="off" />
                     </Form.Item>
-
+                  </Col>
+                  <Col span={4}>
                     <Form.Item
-                      name="formatoRelatorio"
-                      label={<span style={{ fontWeight: "500" }}>Formato padrão de relatórios</span>}
+                      name="cidade"
+                      label={<span style={{ fontWeight: "500" }}>Cidade</span>}
+                      rules={[{ required: true, message: "Campo obrigatório" }]}
                     >
-                      <Select style={{ height: "40px" }}>
-                        <Option value="pdf">PDF</Option>
-                        <Option value="excel">Excel</Option>
-                        <Option value="csv">CSV</Option>
+                      <Input placeholder="Digite a cidade" style={inputStyle} autoComplete="off" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={4}>
+                    <Form.Item
+                      name="estado"
+                      label={<span style={{ fontWeight: "500" }}>Estado (UF)</span>}
+                      rules={[{ required: true, message: "Campo obrigatório" }]}
+                    >
+                      <Input placeholder="UF" style={inputStyle} autoComplete="off" maxLength={2} />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </Card>
+
+              {/* Plano */}
+              <Card
+                size="small"
+                title={
+                  <span>
+                    <DollarOutlined style={{ color: "#722ed1", marginRight: "8px" }} />
+                    Informações do Plano
+                  </span>
+                }
+                style={{ marginBottom: "32px", borderRadius: "8px" }}
+              >
+                <Row gutter={24}>
+                  <Col span={6}>
+                    <Form.Item
+                      name="status"
+                      label={<span style={{ fontWeight: "500" }}>Status</span>}
+                      rules={[{ required: true, message: "Campo obrigatório" }]}
+                    >
+                      <Select placeholder="Selecione o status" style={{ height: "40px" }}>
+                        <Option value="ATIVO">Ativo</Option>
+                        <Option value="INATIVO">Inativo</Option>
                       </Select>
                     </Form.Item>
-
-                    <Form.Item name="idioma" label={<span style={{ fontWeight: "500" }}>Idioma</span>}>
-                      <Select style={{ height: "40px" }}>
-                        <Option value="pt-BR">Português (Brasil)</Option>
-                        <Option value="en-US">English (United States)</Option>
-                        <Option value="es">Español</Option>
+                  </Col>
+                  <Col span={6}>
+                    <Form.Item
+                      name="tipoPlano"
+                      label={<span style={{ fontWeight: "500" }}>Tipo do Plano</span>}
+                      rules={[{ required: true, message: "Campo obrigatório" }]}
+                    >
+                      <Select placeholder="Selecione o plano" style={{ height: "40px" }}>
+                        <Option value="MENSAL">Mensal</Option>
+                        <Option value="ANUAL">Anual</Option>
                       </Select>
                     </Form.Item>
-
-                    <Divider />
-
-                    <Form.Item>
-                      <Button
-                        type="primary"
-                        htmlType="submit"
-                        icon={<SaveOutlined />}
-                        loading={loadingConfig}
-                        size="large"
-                        style={{
-                          background: "linear-gradient(45deg, #52c41a, #73d13d)",
-                          border: "none",
-                          borderRadius: "8px",
-                          fontWeight: "600",
-                          height: "48px",
-                          boxShadow: "0 4px 12px rgba(82, 196, 26, 0.3)",
-                        }}
-                      >
-                        Salvar Configurações
-                      </Button>
+                  </Col>
+                  <Col span={4}>
+                    <Form.Item
+                      name="valorPlano"
+                      label={<span style={{ fontWeight: "500" }}>Valor do Plano (R$)</span>}
+                      rules={[{ required: true, message: "Campo obrigatório" }]}
+                    >
+                      <InputNumber style={{ width: "100%", height: "40px" }} min={0} precision={2} placeholder="0,00" />
                     </Form.Item>
-                  </Form>
-                </Card>
-              ),
-            },
-          ]}
-        />
-      </Spin>
+                  </Col>
+                  <Col span={4}>
+                    <Form.Item
+                      name="dataAquisicaoPlano"
+                      label={<span style={{ fontWeight: "500" }}>Data de Aquisição</span>}
+                      rules={[{ required: true, message: "Campo obrigatório" }]}
+                    >
+                      <DatePicker
+                        style={{ width: "100%", height: "40px" }}
+                        format="DD/MM/YYYY"
+                        placeholder="Selecione a data"
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={4}>
+                    <Form.Item
+                      name="dataFinalPlano"
+                      label={<span style={{ fontWeight: "500" }}>Data Final do Plano</span>}
+                      rules={[{ required: true, message: "Campo obrigatório" }]}
+                    >
+                      <DatePicker
+                        style={{ width: "100%", height: "40px" }}
+                        format="DD/MM/YYYY"
+                        placeholder="Selecione a data"
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </Card>
+
+              <Form.Item style={{ textAlign: "right" }}>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  icon={<SaveOutlined />}
+                  size="large"
+                  style={{
+                    background: "linear-gradient(45deg, #1890ff, #40a9ff)",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontWeight: "600",
+                    height: "48px",
+                    paddingLeft: "32px",
+                    paddingRight: "32px",
+                    boxShadow: "0 4px 12px rgba(24, 144, 255, 0.3)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)"
+                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(24, 144, 255, 0.4)"
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)"
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(24, 144, 255, 0.3)"
+                  }}
+                >
+                  Cadastrar Cliente
+                </Button>
+              </Form.Item>
+            </Form>
+          </TabPane>
+
+          {/* Tab 3: Cadastrar Gerente */}
+          <TabPane
+            tab={
+              <span style={{ fontSize: "16px" }}>
+                <CrownOutlined style={{ color: "#722ed1", marginRight: "8px" }} />
+                Cadastrar Gerente
+              </span>
+            }
+            key="3"
+          >
+            <div style={{ marginBottom: "32px" }}>
+              <Title level={4} style={{ color: "#262626", marginBottom: "8px" }}>
+                Cadastro de Novo Gerente
+              </Title>
+              <Text type="secondary">Crie uma conta de gerente com permissões para cadastrar operadores</Text>
+            </div>
+
+            <Card style={{ borderRadius: "8px", maxWidth: "600px" }}>
+              <Form form={gerenteForm} layout="vertical" onFinish={handleCadastrarGerente}>
+                <Form.Item
+                  name="nome"
+                  label={<span style={{ fontWeight: "500" }}>Nome Completo</span>}
+                  rules={[{ required: true, message: "Campo obrigatório" }]}
+                >
+                  <Input
+                    placeholder="Nome do novo gerente"
+                    style={inputStyle}
+                    autoComplete="off"
+                    prefix={<UserOutlined style={{ color: "#1890ff" }} />}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="email"
+                  label={<span style={{ fontWeight: "500" }}>E-mail de Acesso</span>}
+                  rules={[
+                    { required: true, message: "Campo obrigatório" },
+                    { type: "email", message: "E-mail inválido" },
+                  ]}
+                >
+                  <Input
+                    placeholder="E-mail que será usado para o login"
+                    style={inputStyle}
+                    autoComplete="off"
+                    prefix={<MailOutlined style={{ color: "#fa8c16" }} />}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="senha"
+                  label={<span style={{ fontWeight: "500" }}>Senha Inicial</span>}
+                  rules={[
+                    { required: true, message: "Campo obrigatório" },
+                    { min: 6, message: "Mínimo de 6 caracteres" },
+                  ]}
+                >
+                  <Input.Password
+                    placeholder="Mínimo de 6 caracteres"
+                    style={inputStyle}
+                    autoComplete="new-password"
+                    prefix={<LockOutlined style={{ color: "#52c41a" }} />}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="limiteOperadores"
+                  label={<span style={{ fontWeight: "500" }}>Limite de Operadores</span>}
+                  rules={[
+                    { required: true, message: "Campo obrigatório" },
+                    { type: "number", min: 1, message: "Mínimo de 1 operador" },
+                  ]}
+                >
+                  <InputNumber
+                    min={1}
+                    placeholder="Quantos operadores este gerente pode criar"
+                    style={{ width: "100%", height: "40px" }}
+                  />
+                </Form.Item>
+
+                <Form.Item style={{ marginTop: "32px" }}>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={loading}
+                    icon={<SaveOutlined />}
+                    size="large"
+                    style={{
+                      background: "linear-gradient(45deg, #722ed1, #9254de)",
+                      border: "none",
+                      borderRadius: "8px",
+                      fontWeight: "600",
+                      height: "48px",
+                      width: "100%",
+                      boxShadow: "0 4px 12px rgba(114, 46, 209, 0.3)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-2px)"
+                      e.currentTarget.style.boxShadow = "0 6px 16px rgba(114, 46, 209, 0.4)"
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)"
+                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(114, 46, 209, 0.3)"
+                    }}
+                  >
+                    Cadastrar Gerente
+                  </Button>
+                </Form.Item>
+              </Form>
+            </Card>
+          </TabPane>
+        </Tabs>
+      </Card>
     </div>
   )
 }
-
-export default Settings

@@ -414,7 +414,7 @@ const ProductsView: React.FC = () => {
           <Table
             dataSource={filteredProdutos}
             columns={columns}
-            rowKey="codigo"
+            rowKey={(record) => `${record.codigo}-${record.chaveNota || record.id || Math.random()}`}
             pagination={{
               pageSize: 10,
               showSizeChanger: true,
@@ -422,15 +422,10 @@ const ProductsView: React.FC = () => {
               showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} produtos`,
               style: { marginTop: "16px" },
             }}
-            style={{
-              ".ant-table-thead > tr > th": {
-                background: "linear-gradient(90deg, rgba(24, 144, 255, 0.05), rgba(250, 140, 22, 0.05))",
-                fontWeight: "600",
-                borderRadius: "8px 8px 0 0",
-              },
-            }}
             scroll={{ x: 1200 }}
           />
+
+
         </Spin>
       </Card>
     </div>
