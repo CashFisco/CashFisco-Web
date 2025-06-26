@@ -72,7 +72,7 @@ const HomePage: React.FC = () => {
                       type="primary"
                       style={{ marginTop: "12px", background: "linear-gradient(135deg, #fa8c16 0%, #ffa940 100%)", border: 'none' }}
                       icon={<BuildOutlined />}
-                      onClick={() => router.push("/empresas")}
+                      
                     >
                       Cadastrar Empresa
                     </Button>
@@ -90,7 +90,7 @@ const HomePage: React.FC = () => {
                       type="primary"
                       style={{ marginTop: "12px", background: "linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)", border: 'none' }}
                       icon={<CloudUploadOutlined />}
-                      onClick={() => router.push("/upload-xml")}
+                      
                     >
                       Fazer Upload
                     </Button>
@@ -108,7 +108,7 @@ const HomePage: React.FC = () => {
                       type="primary"
                       style={{ marginTop: "12px", background: "linear-gradient(135deg, #52c41a 0%, #73d13d 100%)", border: 'none' }}
                       icon={<BarChartOutlined />}
-                      onClick={() => router.push("/relatorios")}
+                     
                     >
                       Ver Relatórios
                     </Button>
