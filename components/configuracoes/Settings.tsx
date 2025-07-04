@@ -17,6 +17,11 @@ import {
   Row,
   Col,
   Badge,
+  Modal,     // Adicionado
+  Space,     // Adicionado
+  Tooltip,   // Adicionado
+  Switch,    // Adicionado
+  Divider,   // Adicionado
   App // Importar App
 } from "antd"
 import {
@@ -31,6 +36,7 @@ import {
   UserOutlined,
   CrownOutlined,
   CheckOutlined,
+  EditOutlined,
 } from "@ant-design/icons"
 import { useAuth } from "@/contexts/AuthContext"
 import { usuariosService, clientesService, type Cliente, type CadastroGerenteRequest } from "@/services/api"
@@ -44,16 +50,21 @@ const { Title, Text } = Typography
 const { Option } = Select
 const { TabPane } = Tabs
 
+type ClienteDTO = Partial<Omit<Cliente, "id" | "cpfCnpj">>;
+
+
 export default function SettingsPage() {
   const { perfil } = useAuth()
   const { message } = App.useApp();
 
   const [clienteForm] = Form.useForm<Cliente>()
   const [gerenteForm] = Form.useForm<CadastroGerenteRequest>()
-
+  const [editForm] = Form.useForm<ClienteDTO>()
   const [loading, setLoading] = useState(false)
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loadingClientes, setLoadingClientes] = useState(true)
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
 
   const fetchClientes = async () => {
     setLoadingClientes(true)
@@ -73,6 +84,62 @@ export default function SettingsPage() {
       fetchClientes()
     }
   }, [perfil])
+
+  const handleShowEditModal = (cliente: Cliente) => {
+    setEditingCliente(cliente);
+    editForm.setFieldsValue({
+      ...cliente,
+      dataAquisicaoPlano: cliente.dataAquisicaoPlano ? dayjs(cliente.dataAquisicaoPlano) : null,
+      dataFinalPlano: cliente.dataFinalPlano ? dayjs(cliente.dataFinalPlano) : null,
+    });
+    setIsEditModalVisible(true);
+  };
+
+  const handleUpdateCliente = async (values: ClienteDTO) => {
+    if (!editingCliente) return;
+
+    setLoading(true);
+    try {
+      const payload = {
+        ...values,
+        dataAquisicaoPlano: dayjs(values.dataAquisicaoPlano).format("YYYY-MM-DD"),
+        dataFinalPlano: dayjs(values.dataFinalPlano).format("YYYY-MM-DD"),
+      };
+      await clientesService.atualizarCliente(editingCliente.id, payload);
+      message.success("Cliente atualizado com sucesso!");
+      setIsEditModalVisible(false);
+      fetchClientes();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || "Erro ao atualizar cliente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleBloqueio = async (cliente: Cliente) => {
+    const novoStatus = !cliente.bloqueado;
+    const acao = novoStatus ? "bloquear" : "desbloquear";
+
+    modal.confirm({
+      title: `Confirmar ${acao} cliente`,
+      content: `Tem certeza que deseja ${acao} o cliente ${cliente.nomeRazaoSocial}?`,
+      okText: "Confirmar",
+      cancelText: "Cancelar",
+      onOk: async () => {
+        setLoading(true);
+        try {
+          await clientesService.alterarBloqueioCliente(cliente.id, novoStatus);
+          message.success(`Cliente ${acao}do com sucesso!`);
+          fetchClientes();
+        } catch (error: any) {
+          message.error(error.response?.data?.message || `Erro ao ${acao} cliente.`);
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
+  };
+
 
   const handleCadastrarCliente = async (values: any) => {
     setLoading(true)
@@ -238,6 +305,17 @@ export default function SettingsPage() {
       key: "dataFinalPlano",
       render: (text) => renderAlertaVencimento(text),
       sorter: (a, b) => dayjs(a.dataFinalPlano).unix() - dayjs(b.dataFinalPlano).unix(),
+    },
+    {
+      title: 'Ações',
+      key: 'acoes',
+      align: 'center',
+      render: (_, record) => (
+        <Space>
+          <Tooltip title="Editar Cliente"><Button icon={<EditOutlined />} onClick={() => handleShowEditModal(record)} /></Tooltip>
+          <Tooltip title={record.bloqueado ? "Desbloquear" : "Bloquear"}><Switch checked={record.bloqueado} onChange={() => handleToggleBloqueio(record)} /></Tooltip>
+        </Space>
+      ),
     },
   ]
 
@@ -657,7 +735,7 @@ export default function SettingsPage() {
                   </Select>
                 </Form.Item>
 
-            
+
                 <Form.Item label={<span style={{ fontWeight: '500' }}>Credenciais de Acesso</span>}>
                   {/* 2. O Input.Group com a propriedade 'compact' faz a mágica de unir os campos */}
                   <Input.Group compact>
@@ -747,6 +825,52 @@ export default function SettingsPage() {
           </TabPane>
         </Tabs>
       </Card>
+      <Modal
+        title="Editar Cliente"
+        open={isEditModalVisible}
+        onCancel={() => setIsEditModalVisible(false)}
+        footer={null}
+        width={700}
+        destroyOnClose
+      >
+        <Spin spinning={loading}>
+          {editingCliente && (
+            <Form form={editForm} layout="vertical" onFinish={handleUpdateCliente}>
+              <Divider />
+              <Row gutter={24}>
+                <Col span={12}>
+                  <Form.Item name="nomeRazaoSocial" label="Nome / Razão Social" rules={[{ required: true }]}>
+                    <Input style={inputStyle} />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item name="email" label="Email de Contato" rules={[{ required: true, type: 'email' }]}>
+                    <Input style={inputStyle} />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row gutter={24}>
+                <Col span={12}>
+                  <Form.Item name="dataAquisicaoPlano" label="Data de Aquisição" rules={[{ required: true }]}>
+                    <DatePicker format="DD/MM/YYYY" style={{ width: '100%', height: '40px' }} />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item name="dataFinalPlano" label="Data Final do Plano" rules={[{ required: true }]}>
+                    <DatePicker format="DD/MM/YYYY" style={{ width: '100%', height: '40px' }} />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Form.Item style={{ textAlign: 'right', marginTop: 24 }}>
+                <Space>
+                  <Button onClick={() => setIsEditModalVisible(false)}>Cancelar</Button>
+                  <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>Salvar Alterações</Button>
+                </Space>
+              </Form.Item>
+            </Form>
+          )}
+        </Spin>
+      </Modal>
     </div>
   )
 }

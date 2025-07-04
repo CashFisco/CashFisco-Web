@@ -756,7 +756,6 @@ export interface CadastroGerenteRequest {
 }
 
 
-// ADICIONE ESTE NOVO SERVIÇO ao seu arquivo
 export const clientesService = {
   listarClientes: (): Promise<Cliente[]> => 
     fetchApi<Cliente[]>("/clientes"),
@@ -766,7 +765,31 @@ export const clientesService = {
       method: "POST",
       body: JSON.stringify(clienteData),
     }),
+
+  atualizarCliente: (id: number, clienteData: Partial<Omit<Cliente, 'id'>>): Promise<void> =>
+    fetchApi<void>(`/clientes/atualizar/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(clienteData),
+    }),
+
+  alterarBloqueioCliente: (id: number, bloqueado: boolean): Promise<void> =>
+    fetchApi<void>(`/clientes/${id}/bloqueio?bloqueado=${bloqueado}`, {
+      method: "PUT",
+    }),
 };
+
+
+// ADICIONE ESTE NOVO SERVIÇO ao seu arquivo
+// export const clientesService = {
+//   listarClientes: (): Promise<Cliente[]> => 
+//     fetchApi<Cliente[]>("/clientes"),
+
+//   cadastrarCliente: (clienteData: Omit<Cliente, 'id'>): Promise<Cliente> =>
+//     fetchApi<Cliente>("/clientes/cadastrar", {
+//       method: "POST",
+//       body: JSON.stringify(clienteData),
+//     }),
+// };
 
 
 // Caminho do arquivo: src/services/api.ts
