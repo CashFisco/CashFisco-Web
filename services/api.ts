@@ -412,6 +412,17 @@ export interface RelatorioFinal {
     }>;
 }
 
+export interface Operador {
+  id: number;
+  nome: string;
+  email: string;
+}
+export interface OperadorData {
+  nome: string;
+  email: string;
+  senha?: string;
+}
+
 
 
 
@@ -671,10 +682,22 @@ export const usuariosService = {
     return fetchApi<Usuario[]>("/usuarios/listar")
   },
   cadastrarGerente: (usuario: CadastroGerenteRequest): Promise<Usuario> =>
-    fetchApi<Usuario>("/usuarios/cadastrar", {
+    fetchApi<Usuario>("/usuarios/cadastrar/gerente", {
         method: "POST",
         body: JSON.stringify(usuario),
     }),
+
+  // Listar todos os operadores de um gerente
+  listarOperadores: (): Promise<Usuario[]> => {
+    return fetchApi<Usuario[]>("/operadores")
+  },
+
+  // Excluir um operador
+  excluirOperador: (id: number): Promise<void> => {
+    return fetchApi<void>(`/operadores/${id}`, {
+      method: "DELETE",
+    })
+  },
 }
 
 

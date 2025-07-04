@@ -162,7 +162,7 @@ const ProductsView: React.FC = () => {
             borderRadius: "6px",
           }}
         >
-          {valor.toFixed(4)}%
+          {valor.toFixed(2)}%
         </Tag>
       ),
       sorter: (a, b) => a.valorPis - b.valorPis,
@@ -181,7 +181,7 @@ const ProductsView: React.FC = () => {
             borderRadius: "6px",
           }}
         >
-          {valor.toFixed(4)}%
+          {valor.toFixed(2)}%
         </Tag>
       ),
       sorter: (a, b) => a.valorCofins - b.valorCofins,

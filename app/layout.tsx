@@ -96,8 +96,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   const [darkMode, setDarkMode] = useState(false)
-  const [currentPage, setCurrentPage] = useState("dashboard")
   const pathname = usePathname()
+  const [currentPage, setCurrentPage] = useState(pathname)
   const isLoginPage = pathname === "/login"
 
   return (

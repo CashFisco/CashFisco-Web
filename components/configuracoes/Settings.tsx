@@ -6,7 +6,6 @@ import {
   Form,
   Input,
   Button,
-  message,
   Alert,
   Spin,
   Tabs,
@@ -18,6 +17,7 @@ import {
   Row,
   Col,
   Badge,
+  App // Importar App
 } from "antd"
 import {
   SaveOutlined,
@@ -46,6 +46,7 @@ const { TabPane } = Tabs
 
 export default function SettingsPage() {
   const { perfil } = useAuth()
+  const { message } = App.useApp();
 
   const [clienteForm] = Form.useForm<Cliente>()
   const [gerenteForm] = Form.useForm<CadastroGerenteRequest>()
@@ -393,7 +394,7 @@ export default function SettingsPage() {
                       label={<span style={{ fontWeight: "500" }}>CPF/CNPJ</span>}
                       rules={[{ required: true, message: "Campo obrigatório" }]}
                     >
-                      <Input placeholder="Digite o CPF ou CNPJ" style={inputStyle} autoComplete="off" />
+                      <Input placeholder="Digite o CPF ou CNPJ" style={inputStyle} autoComplete="off" maxLength={14} />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -429,7 +430,7 @@ export default function SettingsPage() {
                       label={<span style={{ fontWeight: "500" }}>Telefone</span>}
                       rules={[{ required: true, message: "Campo obrigatório" }]}
                     >
-                      <Input placeholder="(XX) XXXX-XXXX" style={inputStyle} autoComplete="off" />
+                      <Input placeholder="(XX) XXXX-XXXX" style={inputStyle} autoComplete="off" maxLength={11} />
                     </Form.Item>
                   </Col>
                   <Col span={6}>
@@ -438,7 +439,7 @@ export default function SettingsPage() {
                       label={<span style={{ fontWeight: "500" }}>WhatsApp</span>}
                       rules={[{ required: true, message: "Campo obrigatório" }]}
                     >
-                      <Input placeholder="(XX) XXXXX-XXXX" style={inputStyle} autoComplete="off" />
+                      <Input placeholder="(XX) XXXXX-XXXX" style={inputStyle} autoComplete="off" maxLength={11} />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -632,37 +633,70 @@ export default function SettingsPage() {
                     prefix={<UserOutlined style={{ color: "#1890ff" }} />}
                   />
                 </Form.Item>
-
                 <Form.Item
-                  name="email"
-                  label={<span style={{ fontWeight: "500" }}>E-mail de Acesso</span>}
-                  rules={[
-                    { required: true, message: "Campo obrigatório" },
-                    { type: "email", message: "E-mail inválido" },
-                  ]}
+                  name="clienteId"
+                  label={<span style={{ fontWeight: "500" }}>Vincular ao Cliente</span>}
+                  rules={[{ required: true, message: "É obrigatório vincular a um cliente." }]}
                 >
-                  <Input
-                    placeholder="E-mail que será usado para o login"
-                    style={inputStyle}
-                    autoComplete="off"
-                    prefix={<MailOutlined style={{ color: "#fa8c16" }} />}
-                  />
+                  <Select
+                    showSearch
+                    loading={loadingClientes}
+                    placeholder="Selecione ou pesquise um cliente para vincular"
+                    style={{ height: "40px" }}
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      (option?.children ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                    }
+                  >
+                    {clientes.map((cliente) => (
+                      // Supondo que 'cliente' tem um 'id'. Se o identificador for outro, ajuste o 'value'.
+                      <Option key={cliente.id} value={cliente.id}>
+                        {cliente.nomeRazaoSocial} ({cliente.cpfCnpj})
+                      </Option>
+                    ))}
+                  </Select>
                 </Form.Item>
 
-                <Form.Item
-                  name="senha"
-                  label={<span style={{ fontWeight: "500" }}>Senha Inicial</span>}
-                  rules={[
-                    { required: true, message: "Campo obrigatório" },
-                    { min: 6, message: "Mínimo de 6 caracteres" },
-                  ]}
-                >
-                  <Input.Password
-                    placeholder="Mínimo de 6 caracteres"
-                    style={inputStyle}
-                    autoComplete="new-password"
-                    prefix={<LockOutlined style={{ color: "#52c41a" }} />}
-                  />
+            
+                <Form.Item label={<span style={{ fontWeight: '500' }}>Credenciais de Acesso</span>}>
+                  {/* 2. O Input.Group com a propriedade 'compact' faz a mágica de unir os campos */}
+                  <Input.Group compact>
+
+                    {/* 3. O Form.Item do e-mail agora não tem label e usa 'noStyle' para não quebrar o layout */}
+                    <Form.Item
+                      name="email"
+                      noStyle
+                      rules={[
+                        { required: true, message: 'E-mail é obrigatório' },
+                        { type: 'email', message: 'E-mail inválido' },
+                      ]}
+                    >
+                      <Input
+                        style={{ width: '50%', borderTopLeftRadius: '8px', borderBottomLeftRadius: '8px' }} // Ajusta a largura e o raio da borda
+                        placeholder="E-mail que será usado para o login"
+                        autoComplete="off"
+                        prefix={<MailOutlined style={{ color: '#fa8c16' }} />}
+                      />
+                    </Form.Item>
+
+                    {/* 4. O Form.Item da senha segue o mesmo padrão */}
+                    <Form.Item
+                      name="senha"
+                      noStyle
+                      rules={[
+                        { required: true, message: 'Senha é obrigatória' },
+                        { min: 6, message: 'Mínimo de 6 caracteres' },
+                      ]}
+                    >
+                      <Input.Password
+                        style={{ width: '50%', borderTopRightRadius: '8px', borderBottomRightRadius: '8px' }} // Ajusta a largura e o raio da borda
+                        placeholder="Senha (mín. 6 caracteres)"
+                        autoComplete="new-password"
+                        prefix={<LockOutlined style={{ color: '#52c41a' }} />}
+                      />
+                    </Form.Item>
+
+                  </Input.Group>
                 </Form.Item>
 
                 <Form.Item

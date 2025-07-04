@@ -91,6 +91,8 @@ const UploadXml: React.FC = () => {
   const [resumoRelatorio, setResumoRelatorio] = useState<RelatorioNotaFiscalDTO | null>(null)
   const [showResumo, setShowResumo] = useState(false)
   const [mostrarFinalizar, setMostrarFinalizar] = useState(false);
+  const [savedMonophasicProducts, setSavedMonophasicProducts] = useState<ProdutoComSelecao[]>([]);
+  const [showFinalizeProcessButton, setShowFinalizeProcessButton] = useState(false);
 
   // Estados para análise em lote
   const [analysisMode, setAnalysisMode] = useState<"individual" | "batch">("individual")
@@ -283,48 +285,65 @@ const UploadXml: React.FC = () => {
   const handleSelecionarProduto = (produto: ProdutoComSelecao) => {
     if (!selectedNota) return
 
-    setNotasFiscais((prev) => {
-      return prev.map((nota) => {
-        if (nota.chave !== selectedNota.chave) return nota
+    if (currentStep === 0) {
+      setNotasFiscais((prev) => {
+        return prev.map((nota) => {
+          if (nota.chave !== selectedNota.chave) return nota
 
-        return {
-          ...nota,
-          produtosMonofasicos: nota.produtosMonofasicos.map((p) =>
-            p.id !== produto.id ? p : { ...p, selecionado: !p.selecionado },
-          ),
-        }
+          return {
+            ...nota,
+            produtosMonofasicos: nota.produtosMonofasicos.map((p) =>
+              p.id !== produto.id ? p : { ...p, selecionado: !p.selecionado },
+            ),
+          }
+        })
       })
-    })
 
-    setSelectedNota((nota) =>
-      nota && nota.chave === produto.chave
-        ? {
-          ...nota,
-          produtosMonofasicos: nota.produtosMonofasicos.map((p) =>
-            p.id !== produto.id ? p : { ...p, selecionado: !p.selecionado },
-          ),
-        }
-        : nota,
-    )
+      setSelectedNota((nota) =>
+        nota && nota.chave === produto.chave
+          ? {
+            ...nota,
+            produtosMonofasicos: nota.produtosMonofasicos.map((p) =>
+              p.id !== produto.id ? p : { ...p, selecionado: !p.selecionado },
+            ),
+          }
+          : nota,
+      )
+    } else if (currentStep === 1) {
+      setSavedMonophasicProducts((prev) =>
+        prev.map((p) => (p.id === produto.id ? { ...p, selecionado: !p.selecionado } : p)),
+      )
+    }
   }
 
   const handleSelectAllProdutos = (checked: boolean) => {
     setSelectAll(checked)
-    if (!selectedNota) return
 
-    setNotasFiscais((prev) =>
-      prev.map((nota) => {
-        if (nota.chave !== selectedNota.chave) return nota
+    if (currentStep === 0) {
+      if (!selectedNota) return
 
-        const updated = nota.produtosMonofasicos.map((p) => {
+      setNotasFiscais((prev) =>
+        prev.map((nota) => {
+          if (nota.chave !== selectedNota.chave) return nota
+
+          const updated = nota.produtosMonofasicos.map((p) => {
+            const matches =
+              !searchText || p.descricao.toLowerCase().includes(searchText.toLowerCase()) || p.ncm?.includes(searchText)
+            return matches ? { ...p, selecionado: checked } : p
+          })
+
+          return { ...nota, produtosMonofasicos: updated }
+        }),
+      )
+    } else if (currentStep === 1) {
+      setSavedMonophasicProducts((prev) =>
+        prev.map((p) => {
           const matches =
             !searchText || p.descricao.toLowerCase().includes(searchText.toLowerCase()) || p.ncm?.includes(searchText)
           return matches ? { ...p, selecionado: checked } : p
-        })
-
-        return { ...nota, produtosMonofasicos: updated }
-      }),
-    )
+        }),
+      )
+    }
   }
 
   const handleSalvarProdutos = async (): Promise<RespostaSalvar | void> => {
@@ -358,8 +377,28 @@ const UploadXml: React.FC = () => {
         produtos: produtosParaSalvar,
       }
 
-      await xmlService.salvarProdutos(payload)
+      const respostaSalvar = await xmlService.salvarProdutos(payload)
       message.success("Produtos e Nota Fiscal salvos com sucesso!")
+      setSavedMonophasicProducts(produtosSelecionados); // Salva os produtos selecionados
+
+      // Atualiza o status 'selecionado' na lista original de notas
+      setNotasFiscais((prevNotas) =>
+        prevNotas.map((nota) => {
+          if (nota.chave === selectedNota.chave) {
+            return {
+              ...nota,
+              produtosMonofasicos: nota.produtosMonofasicos.map((p) => {
+                const wasSaved = produtosSelecionados.some(
+                  (savedP) => savedP.id === p.id
+                );
+                return { ...p, selecionado: wasSaved };
+              }),
+            };
+          }
+          return nota;
+        })
+      );
+
       setTabelaAtiva(true)
       setCurrentStep(1)
     } catch (err) {
@@ -375,7 +414,7 @@ const UploadXml: React.FC = () => {
 
     setLoading(true)
     try {
-      const monofasicos = selectedNota.produtosMonofasicos
+      const monofasicos = currentStep === 0 ? selectedNota.produtosMonofasicos : savedMonophasicProducts
       const selecionados = monofasicos.filter((p) => p.selecionado)
       if (!selecionados.length) {
         message.warning("Selecione pelo menos um produto para atualizar")
@@ -405,21 +444,32 @@ const UploadXml: React.FC = () => {
 
       const resposta = await xmlService.atualizarTabelaSPED(selectedNota.chave, produtosParaAtualizar)
 
-      setNotasFiscais((prev) =>
-        prev.map((nota) =>
-          nota.chave === selectedNota.chave
-            ? {
-              ...nota,
-              produtosMonofasicos: nota.produtosMonofasicos.map((orig) => {
-                const upd = resposta.produtos.find((p) => p.descricao === orig.descricao)
-                return upd
-                  ? { ...orig, ...upd, rawAliquotaTabelaPis: undefined, rawAliquotaTabelaCofins: undefined }
-                  : orig
-              }),
-            }
-            : nota,
-        ),
-      )
+      if (currentStep === 0) {
+        setNotasFiscais((prev) =>
+          prev.map((nota) =>
+            nota.chave === selectedNota.chave
+              ? {
+                ...nota,
+                produtosMonofasicos: nota.produtosMonofasicos.map((orig) => {
+                  const upd = resposta.produtos.find((p) => p.descricao === orig.descricao)
+                  return upd
+                    ? { ...orig, ...upd, selecionado: orig.selecionado, rawAliquotaTabelaPis: undefined, rawAliquotaTabelaCofins: undefined }
+                    : orig
+                }),
+              }
+              : nota,
+          ),
+        )
+      } else if (currentStep === 1) {
+        setSavedMonophasicProducts((prev) =>
+          prev.map((orig) => {
+            const upd = resposta.produtos.find((p) => p.descricao === orig.descricao)
+            return upd
+              ? { ...orig, ...upd, selecionado: orig.selecionado, rawAliquotaTabelaPis: undefined, rawAliquotaTabelaCofins: undefined }
+              : orig
+          }),
+        )
+      }
 
       message.success("Tabela SPED aplicada e diferenças calculadas!")
 
@@ -441,8 +491,10 @@ const UploadXml: React.FC = () => {
     setLoading(true);
     try {
       const relatorioData = await xmlService.gerarRelatorio(selectedNota.chave);
+      console.log("Dados do relatório recebidos:", relatorioData); // Adicionado para depuração
       setRelatorio(relatorioData);
       setRelatorioModalVisible(true); // Abre o novo modal
+      console.log("Modal de relatório definido para visível: true"); // Adicionado para depuração
       message.success("Relatório gerado com sucesso!");
     } catch (error) {
       console.error("Erro ao gerar relatório:", error);
@@ -489,13 +541,19 @@ const UploadXml: React.FC = () => {
   // }
 
   useEffect(() => {
-    if (!selectedNota) return
-    const filtrados = selectedNota.produtosMonofasicos.filter(
+    let productsToFilter: ProdutoComSelecao[] = [];
+    if (currentStep === 0 && selectedNota) {
+      productsToFilter = selectedNota.produtosMonofasicos;
+    } else if (currentStep === 1) {
+      productsToFilter = savedMonophasicProducts;
+    }
+
+    const filtrados = productsToFilter.filter(
       (p) => p.descricao.toLowerCase().includes(searchText.toLowerCase()) || p.ncm?.includes(searchText),
-    )
-    const todos = filtrados.length > 0 && filtrados.every((p) => p.selecionado)
-    setSelectAll(todos)
-  }, [searchText, selectedNota])
+    );
+    const todos = filtrados.length > 0 && filtrados.every((p) => p.selecionado);
+    setSelectAll(todos);
+  }, [searchText, selectedNota, savedMonophasicProducts, currentStep]);
 
   const props: UploadProps = {
     name: "files",
@@ -631,7 +689,9 @@ const UploadXml: React.FC = () => {
     },
   ]
 
-  const totalSelecionados = selectedNota ? selectedNota.produtosMonofasicos.filter((p) => p.selecionado).length : 0
+  const totalSelecionados = currentStep === 0
+    ? (selectedNota ? selectedNota.produtosMonofasicos.filter((p) => p.selecionado).length : 0)
+    : savedMonophasicProducts.filter((p) => p.selecionado).length
 
   const produtosColumns: ColumnsType<ProdutoComSelecao> = [
     {
@@ -837,27 +897,33 @@ const UploadXml: React.FC = () => {
     rawField: "rawAliquotaTabelaPis" | "rawAliquotaTabelaCofins",
   ) => {
     if (/^[0-9.,]*$/.test(text)) {
-      setNotasFiscais((prev) =>
-        prev.map((nota) =>
-          nota.chave !== selectedNota?.chave
-            ? nota
-            : {
-              ...nota,
-              produtosMonofasicos: nota.produtosMonofasicos.map((p) =>
+      if (currentStep === 0) {
+        setNotasFiscais((prev) =>
+          prev.map((nota) =>
+            nota.chave !== selectedNota?.chave
+              ? nota
+              : {
+                ...nota,
+                produtosMonofasicos: nota.produtosMonofasicos.map((p) =>
+                  p.id !== produtoId ? p : { ...p, [rawField]: text },
+                ),
+              },
+          ),
+        )
+        setSelectedNota(
+          (n) =>
+            n && {
+              ...n,
+              produtosMonofasicos: n.produtosMonofasicos.map((p) =>
                 p.id !== produtoId ? p : { ...p, [rawField]: text },
               ),
             },
-        ),
-      )
-      setSelectedNota(
-        (n) =>
-          n && {
-            ...n,
-            produtosMonofasicos: n.produtosMonofasicos.map((p) =>
-              p.id !== produtoId ? p : { ...p, [rawField]: text },
-            ),
-          },
-      )
+        )
+      } else if (currentStep === 1) {
+        setSavedMonophasicProducts((prev) =>
+          prev.map((p) => (p.id === produtoId ? { ...p, [rawField]: text } : p)),
+        )
+      }
     }
   }
 
@@ -866,13 +932,32 @@ const UploadXml: React.FC = () => {
     rawField: "rawAliquotaTabelaPis" | "rawAliquotaTabelaCofins",
     numField: "aliquotaTabelaPis" | "aliquotaTabelaCofins",
   ) => {
-    setNotasFiscais((prev) =>
-      prev.map((nota) =>
-        nota.chave !== selectedNota?.chave
-          ? nota
-          : {
-            ...nota,
-            produtosMonofasicos: nota.produtosMonofasicos.map((p) => {
+    if (currentStep === 0) {
+      setNotasFiscais((prev) =>
+        prev.map((nota) =>
+          nota.chave !== selectedNota?.chave
+            ? nota
+            : {
+              ...nota,
+              produtosMonofasicos: nota.produtosMonofasicos.map((p) => {
+                if (p.id !== produtoId) return p
+                const raw = p[rawField] || ""
+                const normalized = raw.replace(",", ".")
+                const num = normalized === "" ? null : Number.parseFloat(normalized)
+                return {
+                  ...p,
+                  [numField]: num,
+                  [rawField]: undefined,
+                }
+              }),
+            },
+        ),
+      )
+      setSelectedNota(
+        (n) =>
+          n && {
+            ...n,
+            produtosMonofasicos: n.produtosMonofasicos.map((p) => {
               if (p.id !== produtoId) return p
               const raw = p[rawField] || ""
               const normalized = raw.replace(",", ".")
@@ -884,25 +969,22 @@ const UploadXml: React.FC = () => {
               }
             }),
           },
-      ),
-    )
-    setSelectedNota(
-      (n) =>
-        n && {
-          ...n,
-          produtosMonofasicos: n.produtosMonofasicos.map((p) => {
-            if (p.id !== produtoId) return p
-            const raw = p[rawField] || ""
-            const normalized = raw.replace(",", ".")
-            const num = normalized === "" ? null : Number.parseFloat(normalized)
-            return {
-              ...p,
-              [numField]: num,
-              [rawField]: undefined,
-            }
-          }),
-        },
-    )
+      )
+    } else if (currentStep === 1) {
+      setSavedMonophasicProducts((prev) =>
+        prev.map((p) => {
+          if (p.id !== produtoId) return p
+          const raw = p[rawField] || ""
+          const normalized = raw.replace(",", ".")
+          const num = normalized === "" ? null : Number.parseFloat(normalized)
+          return {
+            ...p,
+            [numField]: num,
+            [rawField]: undefined,
+          }
+        }),
+      )
+    }
   }
 
   const relatorioColumns: ColumnsType<RelatorioFinal["produtos"][0]> = [
@@ -1467,7 +1549,7 @@ const UploadXml: React.FC = () => {
 
                       {/* Products Table */}
                       <Table
-                        dataSource={selectedNota?.produtosMonofasicos || []}
+                        dataSource={currentStep === 0 ? selectedNota?.produtosMonofasicos || [] : savedMonophasicProducts}
                         columns={produtosColumns}
                         rowKey="id"
                         pagination={{ pageSize: 10 }}
@@ -1481,25 +1563,83 @@ const UploadXml: React.FC = () => {
                         scroll={{ x: 1400 }}
                       />
 
+                      {/* Botões de Navegação */}
+                      {currentStep === 1 && (
+                        <div style={{ marginTop: 24, textAlign: "right" }}>
+                          <Space size="middle">
+                            <Button
+                              onClick={() => {
+                                setCurrentStep(0);
+                                setSavedMonophasicProducts([]);
+                              }}
+                              style={{ borderRadius: "6px" }}
+                            >
+                              Voltar para seleção de produtos
+                            </Button>
+                            <Button
+                              type="primary"
+                              onClick={() => {
+                                setActiveTab("upload");
+                                setSelectedNota(null);
+                                setSavedMonophasicProducts([]);
+                                setCurrentStep(0);
+                              }}
+                              style={{
+                                background: "linear-gradient(45deg, #52c41a, #73d13d)",
+                                border: "none",
+                                borderRadius: "8px",
+                                fontWeight: "600",
+                              }}
+                            >
+                              Adicionar mais produtos
+                            </Button>
+                          </Space>
+                        </div>
+                      )}
+
                       {/* Action Buttons */}
                       <div style={{ marginTop: 24, textAlign: "right" }}>
                         <Space size="middle">
-                          <Button
-                            onClick={() => handleSelectAllProdutos(true)}
-                            icon={<CheckCircleOutlined />}
-                            style={{ borderRadius: "6px" }}
-                          >
-                            Selecionar Todos
-                          </Button>
+                          {currentStep === 0 && (
+                            <Button
+                              onClick={() => handleSelectAllProdutos(true)}
+                              icon={<CheckCircleOutlined />}
+                              style={{ borderRadius: "6px" }}
+                            >
+                              Selecionar Todos
+                            </Button>
+                          )}
 
-                          {currentStep < 2 && (
+                          {currentStep === 0 && (
                             <Tooltip title={steps[currentStep].description}>
                               <Button
                                 type="primary"
                                 size="large"
                                 onClick={steps[currentStep].action}
                                 loading={loading}
-                                disabled={currentStep === 0 && totalSelecionados === 0}
+                                disabled={totalSelecionados === 0}
+                                style={{
+                                  background: "linear-gradient(45deg, #1890ff, #40a9ff)",
+                                  border: "none",
+                                  borderRadius: "8px",
+                                  fontWeight: "600",
+                                  boxShadow: "0 4px 12px rgba(24, 144, 255, 0.3)",
+                                }}
+                                icon={steps[currentStep].icon}
+                              >
+                                {steps[currentStep].buttonText}
+                              </Button>
+                            </Tooltip>
+                          )}
+
+                          {currentStep === 1 && (
+                            <Tooltip title={steps[currentStep].description}>
+                              <Button
+                                type="primary"
+                                size="large"
+                                onClick={steps[currentStep].action}
+                                loading={loading}
+                                disabled={savedMonophasicProducts.filter(p => p.selecionado).length === 0}
                                 style={{
                                   background: "linear-gradient(45deg, #1890ff, #40a9ff)",
                                   border: "none",
@@ -1525,8 +1665,6 @@ const UploadXml: React.FC = () => {
                                     setLoading(true)
                                     try {
                                       await steps[2].action()
-                                      setCurrentStep(3) // Avança para o próximo passo (Exportar Excel)
-                                      setMostrarFinalizar(true)
                                     } catch (err) {
                                       message.error("Erro ao gerar relatório")
                                     } finally {
@@ -1597,7 +1735,7 @@ const UploadXml: React.FC = () => {
                                 </Button>
                               </Tooltip>
 
-                              {mostrarFinalizar && (
+                              {showFinalizeProcessButton && currentStep === 3 && (
                                 <Button
                                   type="primary"
                                   size="large"
@@ -1651,12 +1789,12 @@ const UploadXml: React.FC = () => {
             style={{ ...cardStyle, margin: "16px 0" }}
             extra={
               <Space>
-                <Button onClick={handleGerarRelatorio} style={{ borderRadius: "6px" }}>
+                {/* <Button onClick={() => { console.log("Ver Relatório Completo clicked"); handleGerarRelatorio(); }} style={{ borderRadius: "6px" }}>
                   Ver Relatório Completo
                 </Button>
                 <Button
                   type="primary"
-                  onClick={handleDownloadExcel}
+                  onClick={() => { console.log("Baixar Excel clicked. Relatório chave:", resumoRelatorio?.chave); handleDownloadExcel(); }}
                   icon={<FileExcelOutlined />}
                   style={{
                     background: "linear-gradient(45deg, #52c41a, #73d13d)",
@@ -1665,7 +1803,7 @@ const UploadXml: React.FC = () => {
                   }}
                 >
                   Baixar Excel
-                </Button>
+                </Button> */}
               </Space>
             }
           >
@@ -1855,11 +1993,19 @@ const UploadXml: React.FC = () => {
           </Title>
         }
         open={relatorioModalVisible}
-        onCancel={() => setRelatorioModalVisible(false)}
+        onCancel={() => {
+          setRelatorioModalVisible(false);
+          setCurrentStep(3); // Avança para o passo de exportar/finalizar
+          setShowFinalizeProcessButton(true); // Mostra o botão Finalizar Processo
+        }}
         width="90%"
         centered
         footer={[
-          <Button key="back" onClick={() => setRelatorioModalVisible(false)}>
+          <Button key="back" onClick={() => {
+            setRelatorioModalVisible(false);
+            setCurrentStep(3); // Avança para o passo de exportar/finalizar
+            setShowFinalizeProcessButton(true); // Mostra o botão Finalizar Processo
+          }}>
             Fechar
           </Button>,
           <Button

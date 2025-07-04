@@ -9,9 +9,10 @@ import {
   SettingOutlined,
   BulbOutlined,
   ShopOutlined, // Ícone para empresas
-  DashboardOutlined
+  DashboardOutlined,
 } from "@ant-design/icons"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/AuthContext" // 1. NOVO: Importar o hook de autenticação
 
 const { Sider } = Layout
 const { Title } = Typography
@@ -25,7 +26,9 @@ interface AppSidebarProps {
 
 const AppSidebar: React.FC<AppSidebarProps> = ({ currentPage, setCurrentPage, darkMode, setDarkMode }) => {
   const router = useRouter()
+  const { perfil } = useAuth() // 2. NOVO: Obter o perfil do usuário
 
+  // 3. ALTERADO: A lista de menu é construída de forma dinâmica
   const menuItems = [
     {
       key: "dashboard",
@@ -43,7 +46,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ currentPage, setCurrentPage, da
       label: "Tabela Speed",
     },
     {
-      key: "companies", // Novo item para empresas
+      key: "companies",
       icon: <ShopOutlined />,
       label: "Empresas",
     },
@@ -52,18 +55,21 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ currentPage, setCurrentPage, da
       icon: <BarChartOutlined />,
       label: "Relatórios",
     },
-
-       {
-      key: "PaginaAdmin",
+    {
+      key: "PaginaAdmin", // Mantido conforme seu código original
       icon: <BarChartOutlined />,
       label: "Administração",
-    }, 
-    {
-      key: "settings",
-      icon: <SettingOutlined />,
-      label: "Configurações",
     },
   ]
+
+  // Condição para adicionar o item "Configurações" apenas para o ADMIN
+  if (perfil === "ADMIN") {
+    menuItems.push({
+      key: "settings", // A chave para a página de configurações
+      icon: <SettingOutlined />,
+      label: "Configurações",
+    });
+  }
 
   return (
     <Sider
@@ -105,4 +111,3 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ currentPage, setCurrentPage, da
 }
 
 export default AppSidebar
-
