@@ -681,6 +681,7 @@ export const usuariosService = {
   listarUsuarios: (): Promise<Usuario[]> => {
     return fetchApi<Usuario[]>("/usuarios/listar")
   },
+  
   cadastrarGerente: (usuario: CadastroGerenteRequest): Promise<Usuario> =>
     fetchApi<Usuario>("/usuarios/cadastrar/gerente", {
         method: "POST",
@@ -689,17 +690,18 @@ export const usuariosService = {
 
   // Listar todos os operadores de um gerente
   listarOperadores: (): Promise<Usuario[]> => {
-    return fetchApi<Usuario[]>("/operadores")
+    // ✅ CORREÇÃO: A rota correta é /usuarios/operadores
+    return fetchApi<Usuario[]>("/usuarios/operadores")
   },
 
   // Excluir um operador
   excluirOperador: (id: number): Promise<void> => {
-    return fetchApi<void>(`/operadores/${id}`, {
+    // ✅ CORREÇÃO: A rota correta também precisa do prefixo /usuarios
+    return fetchApi<void>(`/usuarios/operadores/${id}`, {
       method: "DELETE",
     })
   },
 }
-
 
 
 export const auditLogService = {

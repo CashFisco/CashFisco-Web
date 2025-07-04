@@ -8,11 +8,11 @@ import {
   BarChartOutlined,
   SettingOutlined,
   BulbOutlined,
-  ShopOutlined, // Ícone para empresas
+  ShopOutlined,
   DashboardOutlined,
 } from "@ant-design/icons"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/contexts/AuthContext" // 1. NOVO: Importar o hook de autenticação
+import { useAuth } from "@/contexts/AuthContext" 
 
 const { Sider } = Layout
 const { Title } = Typography
