@@ -42,10 +42,18 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
       throw new Error("Sessão expirada. Faça login novamente.")
     }
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || `Erro ${response.status}: ${response.statusText}`)
-    }
+   if (!response.ok) {
+  let errorMessage = `Erro ${response.status}: ${response.statusText}`
+  try {
+    const errorData = await response.json()
+    errorMessage = errorData.message || errorData.error || errorMessage
+  } catch {
+    const errorText = await response.text()
+    if (errorText) errorMessage = errorText
+  }
+  throw new Error(errorMessage)
+}
+
 
     if (response.status === 204) {
       return {} as T
@@ -76,6 +84,7 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
 export interface ProdutoComSelecao {
   id?: string;
   descricao: string;
+  chave?: string;
   ncm?: string;
   valorProduto: number;
   valorNotaPis: number;
@@ -91,16 +100,27 @@ export interface ProdutoComSelecao {
   selecionado: boolean;
 }
 
+export interface ProdutoSalvarDTO {
+  descricao: string;
+  ncm?: string;
+  valorProduto: number;
+  valorNotaPis: number;
+  valorNotaCofins: number;
+  aliquotaNotaPis?: number;
+  aliquotaNotaCofins?: number;
+  aliquotaTabelaPis: number | null;
+  aliquotaTabelaCofins: number | null;
+};
+
+
 export interface ProdutoNota {
   id: number;
-  chaveNota?: string; // opcional, conforme já estava
+  chaveNota?: string;
   descricao: string;
   selecionado: boolean;
   valorProduto: number;
   valorNotaPis: number;
   valorNotaCofins: number;
-
-  // Novos campos adicionados para cálculos de diferença e final
   valorTabelaPis: number;
   valorTabelaCofins: number;
   valorFinalPis: number;
@@ -134,6 +154,7 @@ export interface NotaComSelecao {
   nomeRazaoSocial: string;
   dataEmissao: string;
   produtos: ProdutoNota[];
+   valorTotal?: number;
   produtosMonofasicos: ProdutoComSelecao[];
 }
 
@@ -241,6 +262,9 @@ export interface RelatorioNotaFiscalDTO {
   dataEmissao: string
   direitoRestituicao: boolean
   valorRestituicao: number
+  valorTotalProdutosMonofasicos?: number;
+  valorTotalPis: number;
+  valorTotalCofins: number;
   produtos: ProdutoRelatorio[]
 }
 

@@ -478,12 +478,12 @@ const EmpresasView: React.FC = () => {
                 transition: "all 0.3s",
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = "#1890ff"
-                e.target.style.boxShadow = "0 0 0 2px rgba(24, 144, 255, 0.1)"
+                e.target.style.borderColor = "#1890ff";
+                e.target.style.boxShadow = "0 0 0 2px rgba(24, 144, 255, 0.1)";
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = "#f0f0f0"
-                e.target.style.boxShadow = "none"
+                e.target.style.borderColor = "#f0f0f0";
+                e.target.style.boxShadow = "none";
               }}
             />
           </Col>
@@ -502,12 +502,12 @@ const EmpresasView: React.FC = () => {
                 boxShadow: "0 4px 12px rgba(250, 140, 22, 0.3)",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)"
-                e.currentTarget.style.boxShadow = "0 6px 16px rgba(250, 140, 22, 0.4)"
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 6px 16px rgba(250, 140, 22, 0.4)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)"
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(250, 140, 22, 0.3)"
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(250, 140, 22, 0.3)";
               }}
             >
               Nova Empresa
@@ -554,14 +554,15 @@ const EmpresasView: React.FC = () => {
         }
         open={modalVisible}
         onCancel={() => {
-          form.resetFields()
-          setModalVisible(false)
+          form.resetFields();
+          setModalVisible(false);
         }}
         footer={null}
         destroyOnClose
         width={600}
         style={{ borderRadius: "12px" }}
       >
+
         <Divider style={{ margin: "16px 0 24px 0" }} />
 
         <Form<Empresa> form={form} layout="vertical" onFinish={handleSubmit}>

@@ -1,6 +1,8 @@
 "use client"
 
 import type React from "react"
+import { message } from "antd";
+
 
 import { useState, useEffect } from "react"
 import {
@@ -14,7 +16,6 @@ import {
   Divider,
   Tag,
   Space,
-  message,
   Checkbox,
   Input,
   Row,
@@ -61,7 +62,10 @@ import {
   type NotaComSelecao,
   type ProdutoComSelecao,
   type RelatorioNotaFiscalDTO,
+  ProdutoSalvarDTO,
+  ProdutoRelatorio,
 } from "@/services/api"
+import { RcFile } from "antd/es/upload/interface"
 
 const { Dragger } = Upload
 const { Title, Text } = Typography
@@ -69,7 +73,6 @@ const { TabPane } = Tabs
 const { Search } = Input
 const { Step } = Steps
 
-// Tipos para análise em lote
 interface ProcessingFile {
   file: File
   status: "waiting" | "processing" | "success" | "error"
@@ -85,7 +88,6 @@ const UploadXml: React.FC = () => {
   const [searchText, setSearchText] = useState<string>("")
   const [selectAll, setSelectAll] = useState<boolean>(false)
   const [currentStep, setCurrentStep] = useState<number>(0)
-  const [relatorio, setRelatorio] = useState<RelatorioFinal | null>(null)
   const [relatorioModalVisible, setRelatorioModalVisible] = useState<boolean>(false)
   const [tabelaAtiva, setTabelaAtiva] = useState(false)
   const [resumoRelatorio, setResumoRelatorio] = useState<RelatorioNotaFiscalDTO | null>(null)
@@ -93,6 +95,8 @@ const UploadXml: React.FC = () => {
   const [mostrarFinalizar, setMostrarFinalizar] = useState(false);
   const [savedMonophasicProducts, setSavedMonophasicProducts] = useState<ProdutoComSelecao[]>([]);
   const [showFinalizeProcessButton, setShowFinalizeProcessButton] = useState(false);
+  const [relatorio, setRelatorio] = useState<RelatorioNotaFiscalDTO | null>(null);
+
 
   // Estados para análise em lote
   const [analysisMode, setAnalysisMode] = useState<"individual" | "batch">("individual")
@@ -111,40 +115,8 @@ const UploadXml: React.FC = () => {
     }
   }, [notasFiscais, selectedNota])
 
-  // Upload individual (mantém o funcionamento atual)
-  // const handleIndividualUpload = async (fileList: FileList) => {
-  //   setLoading(true)
-  //   try {
-  //     const fd = new FormData()
-  //     Array.from(fileList).forEach((f) => fd.append("files", f))
 
-  //     const respostas = await xmlService.analisarXml(fd)
-
-  //     const notasComSelecao: NotaComSelecao[] = respostas.map((nf) => ({
-  //       ...nf,
-  //       produtosMonofasicos: nf.produtos.map((produto, idx) => ({
-  //         ...produto,
-  //         id: produto.id ?? `${nf.chave}-${idx}`,
-  //         selecionado: false,
-  //         valorProduto: produto.valorProduto ?? 0,
-  //         valorNotaPis: produto.valorNotaPis ?? 0,
-  //         valorNotaCofins: produto.valorNotaCofins ?? 0,
-  //       })),
-  //     }))
-
-  //     setNotasFiscais((prev) => [...prev, ...notasComSelecao])
-  //     message.success(`${notasComSelecao.length} nota(s) analisada(s) com sucesso!`)
-  //     setActiveTab("notas")
-  //     setCurrentStep(0)
-  //   } catch (err) {
-  //     console.error("Erro ao analisar XML(s):", err)
-  //     message.error("Erro ao analisar o(s) arquivo(s)")
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }
-
-  const handleIndividualUpload = async (fileList: FileList) => {
+  const handleIndividualUpload = async (fileList: RcFile[]) => {
     setLoading(true);
     try {
       const fd = new FormData();
@@ -156,7 +128,7 @@ const UploadXml: React.FC = () => {
         ...nf,
         produtosMonofasicos: nf.produtos.map((produto, idx) => ({
           ...produto,
-          id: produto.id ?? `${nf.chave}-${idx}`,
+          id: produto.id ? String(produto.id) : `${nf.chave}-${idx}`,
           selecionado: false,
           valorProduto: produto.valorProduto ?? 0,
           valorNotaPis: produto.valorNotaPis ?? 0,
@@ -174,7 +146,7 @@ const UploadXml: React.FC = () => {
         return unicas;
       });
 
-      message.success(`${novasNotas.length} nota(s) analisada(s) com sucesso!`);
+      // message.success(`${novasNotas.length} nota(s) analisada(s) com sucesso!`);
       setActiveTab("notas");
       setCurrentStep(0);
     } catch (err) {
@@ -187,7 +159,7 @@ const UploadXml: React.FC = () => {
 
 
   // Upload em lote
-  const handleBatchUpload = async (fileList: FileList) => {
+  const handleBatchUpload = async (fileList: RcFile[]) => {
     const files = Array.from(fileList)
 
     if (files.length > 50) {
@@ -224,7 +196,8 @@ const UploadXml: React.FC = () => {
             ...respostas[0],
             produtosMonofasicos: respostas[0].produtos.map((produto, idx) => ({
               ...produto,
-              id: produto.id ?? `${respostas[0].chave}-${idx}`,
+              id: produto.id ? String(produto.id) : `${respostas[0].chave}-${idx}`,
+              chave: respostas[0].chave,
               selecionado: false,
               valorProduto: produto.valorProduto ?? 0,
               valorNotaPis: produto.valorNotaPis ?? 0,
@@ -274,7 +247,7 @@ const UploadXml: React.FC = () => {
     message.success(`Processamento concluído! ${successCount} de ${files.length} arquivos processados com sucesso.`)
   }
 
-  const handleUpload = async (fileList: FileList) => {
+  const handleUpload = async (fileList: RcFile[]) => {
     if (analysisMode === "individual") {
       await handleIndividualUpload(fileList)
     } else {
@@ -357,7 +330,7 @@ const UploadXml: React.FC = () => {
         return
       }
 
-      const produtosParaSalvar: ProdutoNota[] = produtosSelecionados.map((p) => ({
+      const produtosParaSalvar: ProdutoSalvarDTO[] = produtosSelecionados.map((p) => ({
         descricao: p.descricao,
         ncm: p.ncm,
         valorProduto: p.valorProduto,
@@ -378,7 +351,7 @@ const UploadXml: React.FC = () => {
       }
 
       const respostaSalvar = await xmlService.salvarProdutos(payload)
-      message.success("Produtos e Nota Fiscal salvos com sucesso!")
+      // message.success("Produtos e Nota Fiscal salvos com sucesso!")
       setSavedMonophasicProducts(produtosSelecionados); // Salva os produtos selecionados
 
       // Atualiza o status 'selecionado' na lista original de notas
@@ -471,7 +444,7 @@ const UploadXml: React.FC = () => {
         )
       }
 
-      message.success("Tabela SPED aplicada e diferenças calculadas!")
+      // message.success("Tabela SPED aplicada e diferenças calculadas!")
 
       const resumo = await xmlService.gerarRelatorio(selectedNota.chave)
       setResumoRelatorio(resumo)
@@ -493,7 +466,7 @@ const UploadXml: React.FC = () => {
       const relatorioData = await xmlService.gerarRelatorio(selectedNota.chave);
       console.log("Dados do relatório recebidos:", relatorioData); // Adicionado para depuração
       setRelatorio(relatorioData);
-      setRelatorioModalVisible(true); // Abre o novo modal
+      setRelatorioModalVisible(true);
       console.log("Modal de relatório definido para visível: true"); // Adicionado para depuração
       message.success("Relatório gerado com sucesso!");
     } catch (error) {
@@ -531,15 +504,6 @@ const UploadXml: React.FC = () => {
     }
   };
 
-  // const handleFinalizarProcesso = () => {
-  //   if (selectedNota) {
-  //     setNotasFiscais((prev) => prev.filter((n) => n.chave !== selectedNota.chave))
-  //     setSelectedNota(null)
-  //     setCurrentStep(0)
-  //     setRelatorio(null)
-  //   }
-  // }
-
   useEffect(() => {
     let productsToFilter: ProdutoComSelecao[] = [];
     if (currentStep === 0 && selectedNota) {
@@ -561,9 +525,10 @@ const UploadXml: React.FC = () => {
     accept: ".xml",
     showUploadList: false,
     beforeUpload: (_file, fileList) => {
-      handleUpload(fileList as FileList)
-      return false
+      handleUpload(fileList); // Agora tipado corretamente
+      return false;
     },
+
     onChange(info) {
       if (info.file.status !== "uploading") {
         console.log("Arquivos selecionados:", info.fileList)
@@ -571,12 +536,12 @@ const UploadXml: React.FC = () => {
     },
   }
 
-  const notasColumns: ColumnsType<NotaFiscal> = [
+  const notasColumns: ColumnsType<NotaComSelecao> = [
     {
       title: "Chave",
       dataIndex: "chave",
       key: "chave",
-      render: (text) => (
+      render: (text: string) => (
         <Tag
           style={{
             background: "linear-gradient(45deg, #1890ff, #40a9ff)",
@@ -599,7 +564,7 @@ const UploadXml: React.FC = () => {
       title: "Emitente",
       dataIndex: "nomeRazaoSocial",
       key: "nomeRazaoSocial",
-      render: (text) => (
+      render: (text: string) => (
         <Text strong style={{ color: "#262626" }}>
           {text}
         </Text>
@@ -609,7 +574,7 @@ const UploadXml: React.FC = () => {
       title: "Data Emissão",
       dataIndex: "dataEmissao",
       key: "dataEmissao",
-      render: (text) => (
+      render: (text: string | null) => (
         <div style={{ display: "flex", alignItems: "center" }}>
           <CalendarOutlined style={{ color: "#52c41a", marginRight: "6px" }} />
           <Text>{text ? new Date(text).toLocaleDateString("pt-BR") : "-"}</Text>
@@ -620,7 +585,7 @@ const UploadXml: React.FC = () => {
       title: "Valor Total",
       dataIndex: "valorTotal",
       key: "valorTotal",
-      render: (value) => (
+      render: (value: number | null | undefined) => (
         <Tag
           style={{
             background: "rgba(82, 196, 26, 0.1)",
@@ -630,7 +595,7 @@ const UploadXml: React.FC = () => {
             borderRadius: "6px",
           }}
         >
-          {value ? `R$ ${value.toFixed(2)}` : "-"}
+          {value != null ? `R$ ${value.toFixed(2)}` : "-"}
         </Tag>
       ),
     },
@@ -638,7 +603,7 @@ const UploadXml: React.FC = () => {
       title: "Total PIS",
       dataIndex: "totalPis",
       key: "totalPis",
-      render: (value) => (
+      render: (value: number | null | undefined) => (
         <Tag
           style={{
             background: "rgba(24, 144, 255, 0.1)",
@@ -648,7 +613,7 @@ const UploadXml: React.FC = () => {
             borderRadius: "6px",
           }}
         >
-          {value ? `R$ ${value.toFixed(2)}` : "-"}
+          {value != null ? `R$ ${value.toFixed(2)}` : "-"}
         </Tag>
       ),
     },
@@ -656,7 +621,7 @@ const UploadXml: React.FC = () => {
       title: "Total COFINS",
       dataIndex: "totalCofins",
       key: "totalCofins",
-      render: (value) => (
+      render: (value: number | null | undefined) => (
         <Tag
           style={{
             background: "rgba(250, 140, 22, 0.1)",
@@ -666,17 +631,30 @@ const UploadXml: React.FC = () => {
             borderRadius: "6px",
           }}
         >
-          {value ? `R$ ${value.toFixed(2)}` : "-"}
+          {value != null ? `R$ ${value.toFixed(2)}` : "-"}
         </Tag>
       ),
     },
     {
       title: "Ações",
       key: "acoes",
-      render: (_, record) => (
+      render: (_: any, record: NotaFiscal) => (
         <Button
           type="primary"
-          onClick={() => setSelectedNota(record)}
+          onClick={() => {
+            const notaComSelecao: NotaComSelecao = {
+              ...record,
+              produtosMonofasicos: record.produtos.map((produto, idx) => ({
+                ...produto,
+                id: produto.id ? String(produto.id) : `${record.chave}-${idx}`,
+                selecionado: false,
+                valorProduto: produto.valorProduto ?? 0,
+                valorNotaPis: produto.valorNotaPis ?? 0,
+                valorNotaCofins: produto.valorNotaCofins ?? 0,
+              })),
+            };
+            setSelectedNota(notaComSelecao);
+          }}
           style={{
             background: "linear-gradient(45deg, #1890ff, #40a9ff)",
             border: "none",
@@ -687,7 +665,8 @@ const UploadXml: React.FC = () => {
         </Button>
       ),
     },
-  ]
+  ];
+
 
   const totalSelecionados = currentStep === 0
     ? (selectedNota ? selectedNota.produtosMonofasicos.filter((p) => p.selecionado).length : 0)
@@ -820,18 +799,19 @@ const UploadXml: React.FC = () => {
           title: "Alíq. PIS Tabela (%)",
           dataIndex: "aliquotaTabelaPis",
           key: "aliquotaTabelaPis",
-          render: (_, record) => {
+          render: (_: any, record: ProdutoComSelecao) => {
             const display =
               record.rawAliquotaTabelaPis != null
                 ? record.rawAliquotaTabelaPis
                 : record.aliquotaTabelaPis != null
                   ? record.aliquotaTabelaPis.toFixed(2).replace(".", ",")
-                  : ""
+                  : "";
+
             return (
               <Input
                 value={display}
-                onChange={(e) => handleRawChange(e.target.value, record.id, "rawAliquotaTabelaPis")}
-                onBlur={() => handleBlur(record.id, "rawAliquotaTabelaPis", "aliquotaTabelaPis")}
+                onChange={(e) => handleRawChange(e.target.value, record.id ?? "", "rawAliquotaTabelaPis")}
+                onBlur={() => handleBlur(record.id ?? "", "rawAliquotaTabelaPis", "aliquotaTabelaPis")}
                 suffix="%"
                 placeholder="0,00"
                 disabled={!record.selecionado}
@@ -840,25 +820,28 @@ const UploadXml: React.FC = () => {
                   border: record.selecionado ? "2px solid #1890ff" : "1px solid #d9d9d9",
                 }}
               />
-            )
+            );
           },
+
         },
+
         {
           title: "Alíq. COFINS Tabela (%)",
           dataIndex: "aliquotaTabelaCofins",
           key: "aliquotaTabelaCofins",
-          render: (_, record) => {
+          render: (_: any, record: ProdutoComSelecao) => {
             const display =
               record.rawAliquotaTabelaCofins != null
                 ? record.rawAliquotaTabelaCofins
                 : record.aliquotaTabelaCofins != null
                   ? record.aliquotaTabelaCofins.toFixed(2).replace(".", ",")
-                  : ""
+                  : "";
+
             return (
               <Input
                 value={display}
-                onChange={(e) => handleRawChange(e.target.value, record.id, "rawAliquotaTabelaCofins")}
-                onBlur={() => handleBlur(record.id, "rawAliquotaTabelaCofins", "aliquotaTabelaCofins")}
+                onChange={(e) => handleRawChange(e.target.value, record.id ?? "", "rawAliquotaTabelaCofins")}
+                onBlur={() => handleBlur(record.id ?? "", "rawAliquotaTabelaCofins", "aliquotaTabelaCofins")}
                 suffix="%"
                 placeholder="0,00"
                 disabled={!record.selecionado}
@@ -867,7 +850,7 @@ const UploadXml: React.FC = () => {
                   border: record.selecionado ? "2px solid #fa8c16" : "1px solid #d9d9d9",
                 }}
               />
-            )
+            );
           },
         },
       ]
@@ -885,10 +868,28 @@ const UploadXml: React.FC = () => {
     { title: "Alíq. COFINS (Tabela)", dataIndex: "aliquotaTabelaCofins", key: "aliquotaTabelaCofins", align: 'right', render: v => v !== null ? <Tag color="geekblue">{`${v.toFixed(2)}%`}</Tag> : '-' },
     { title: "Dif. PIS", dataIndex: "valorDiferencaPis", key: "valorDiferencaPis", align: 'right', render: v => <Text type={v > 0 ? "success" : "danger"} strong>{`R$ ${v.toFixed(2)}`}</Text> },
     { title: "Dif. COFINS", dataIndex: "valorDiferencaCofins", key: "valorDiferencaCofins", align: 'right', render: v => <Text type={v > 0 ? "success" : "danger"} strong>{`R$ ${v.toFixed(2)}`}</Text> },
-    { title: "Valor a Restituir", dataIndex: "valorRestituirProduto", key: "valorRestituirProduto", align: 'right', render: v => <Tag color={v > 0 ? "success" : "default"} strong>{`R$ ${v.toFixed(2)}`}</Tag> },
-    { title: "Restituir PIS?", dataIndex: "restituirPis", key: "restituirPis", align: 'center', render: (restituir) => restituir ? <CheckSquareOutlined style={{ color: 'green', fontSize: 18 }} /> : <CloseSquareOutlined style={{ color: 'red', fontSize: 18 }} /> },
-    { title: "Restituir COFINS?", dataIndex: "restituirCofins", key: "restituirCofins", align: 'center', render: (restituir) => restituir ? <CheckSquareOutlined style={{ color: 'green', fontSize: 18 }} /> : <CloseSquareOutlined style={{ color: 'red', fontSize: 18 }} /> },
-  ];
+    {
+      title: "Valor a Restituir", dataIndex: "valorRestituirProduto", key: "valorRestituirProduto", align: 'right',
+      render: v => (
+        <Tag color={v > 0 ? "success" : "default"}>
+          <Text strong>{`R$ ${v.toFixed(2)}`}</Text>
+        </Tag>
+      )
+    },
+    {
+      title: "Restituir PIS?", dataIndex: "restituirPis", key: "restituirPis", align: 'center',
+      render: (restituir: boolean) => restituir
+        ? <CheckSquareOutlined style={{ color: 'green', fontSize: 18 }} />
+        : <CloseSquareOutlined style={{ color: 'red', fontSize: 18 }} />
+    },
+    {
+      title: "Restituir COFINS?", dataIndex: "restituirCofins", key: "restituirCofins", align: 'center',
+      render: (restituir: boolean) => restituir
+        ? <CheckSquareOutlined style={{ color: 'green', fontSize: 18 }} />
+        : <CloseSquareOutlined style={{ color: 'red', fontSize: 18 }} />
+    },
+  ]
+
 
 
   const handleRawChange = (
@@ -1325,10 +1326,13 @@ const UploadXml: React.FC = () => {
                         style={{ display: "none" }}
                         onChange={(e) => {
                           if (e.target.files && e.target.files.length > 0) {
-                            handleUpload(e.target.files)
+                            // converter FileList em array de RcFile (cast)
+                            const rcFiles = Array.from(e.target.files) as RcFile[];
+                            handleUpload(rcFiles);
                           }
                         }}
                       />
+
                       <Button
                         type="primary"
                         size="large"
@@ -1383,20 +1387,17 @@ const UploadXml: React.FC = () => {
                         </Title>
                         <Text type="secondary">Selecione uma nota para visualizar e processar os produtos</Text>
                       </div>
-                      <Table
+                      <Table<NotaComSelecao>
                         dataSource={notasFiscais}
                         columns={notasColumns}
-                        rowKey={(record, index) => `${record.chave}-${index}`}
+                        rowKey={(record) => record.chave}
                         pagination={{ pageSize: 5 }}
-                        style={{
-                          ".ant-table-thead > tr > th": {
-                            background: "linear-gradient(90deg, rgba(24, 144, 255, 0.05), rgba(250, 140, 22, 0.05))",
-                            fontWeight: "600",
-                          },
-                        }}
+                        className="custom-notas-table"
                       />
 
+
                     </Card>
+
                   ) : null}
 
                   {selectedNota && (
@@ -1501,24 +1502,17 @@ const UploadXml: React.FC = () => {
                         <Col span={12}>
                           <Card size="small" style={cardStyle}>
                             <Search
+                              className="custom-search"
                               placeholder="Buscar por descrição ou NCM"
                               allowClear
                               enterButton={<SearchOutlined />}
                               size="large"
                               value={searchText}
                               onChange={(e) => setSearchText(e.target.value)}
-                              style={{
-                                marginBottom: 16,
-                                ".ant-input": {
-                                  borderRadius: "8px",
-                                },
-                                ".ant-btn": {
-                                  borderRadius: "8px",
-                                  background: "linear-gradient(45deg, #1890ff, #40a9ff)",
-                                  border: "none",
-                                },
-                              }}
+                              style={{ marginBottom: 16 }}
                             />
+
+
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                               <Badge count={totalSelecionados} style={{ backgroundColor: "#1890ff" }}>
                                 <Tag
@@ -1554,14 +1548,10 @@ const UploadXml: React.FC = () => {
                         rowKey="id"
                         pagination={{ pageSize: 10 }}
                         rowClassName={(record) => (record.selecionado ? "ant-table-row-selected" : "")}
-                        style={{
-                          ".ant-table-thead > tr > th": {
-                            background: "linear-gradient(90deg, rgba(24, 144, 255, 0.05), rgba(250, 140, 22, 0.05))",
-                            fontWeight: "600",
-                          },
-                        }}
+                        className="custom-produtos-table"
                         scroll={{ x: 1400 }}
                       />
+
 
                       {/* Botões de Navegação */}
                       {currentStep === 1 && (
@@ -2069,14 +2059,15 @@ const UploadXml: React.FC = () => {
 
             <Title level={5} style={{ marginTop: '32px' }}>Detalhamento dos Produtos Analisados</Title>
             <Table
-              columns={relatorioProdutosColumns}
-              dataSource={relatorio.produtos}
+              columns={relatorioProdutosColumns as ColumnsType<ProdutoRelatorio>}
+              dataSource={relatorio.produtos as ProdutoRelatorio[]}
               rowKey={(record, index) => `${record.descricao}-${record.ncm}-${index}`}
               pagination={{ pageSize: 5, showSizeChanger: true }}
               scroll={{ x: 1800 }}
               size="small"
               bordered
             />
+
 
           </Spin>
         ) : (
